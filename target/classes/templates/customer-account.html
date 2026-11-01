@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Thông tin khách hàng')}"></head>
+<body class="reservation-page">
+<div th:replace="~{fragments :: nav('account')}"></div>
+
+<main class="container reservation-container">
+  <div th:replace="~{fragments :: alerts}"></div>
+
+  <section class="reservation-welcome customer-dashboard-welcome">
+    <div>
+      <span class="reservation-eyebrow">KHU VỰC KHÁCH HÀNG</span>
+      <h1>Thông tin khách hàng</h1>
+      <p>Xem và cập nhật thông tin tài khoản của bạn.</p>
+    </div>
+    <div class="reservation-welcome-icon"><i class="bi bi-person-vcard"></i></div>
+  </section>
+
+  <section class="reservation-card customer-account-card" aria-label="Thông tin tài khoản">
+    <div class="reservation-section-heading">
+      <div>
+        <span class="reservation-eyebrow">HỒ SƠ CỦA BẠN</span>
+        <h2>Thông tin cá nhân</h2>
+        <p>Thông tin này gắn với tài khoản đang đăng nhập.</p>
+      </div>
+      <span class="reservation-status status-confirmed">Khách hàng</span>
+    </div>
+
+    <dl class="user-menu-details customer-account-details">
+      <div>
+        <dt>Họ và tên</dt>
+        <dd th:text="${currentUserProfile.fullName != null and !currentUserProfile.fullName.isBlank()} ? ${currentUserProfile.fullName} : 'Chưa cập nhật'">Chưa cập nhật</dd>
+      </div>
+      <div>
+        <dt>Tên đăng nhập</dt>
+        <dd th:text="${currentUserProfile.username}">username</dd>
+      </div>
+      <div>
+        <dt>Số điện thoại hiện tại</dt>
+        <dd th:text="${currentUserProfile.phone != null and !currentUserProfile.phone.isBlank()} ? ${currentUserProfile.phone} : 'Chưa cập nhật'">Chưa cập nhật</dd>
+      </div>
+      <div>
+        <dt>Trạng thái tài khoản</dt>
+        <dd th:text="${currentUserProfile.enabled} ? 'Đang hoạt động' : 'Đã khóa'">Đang hoạt động</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="reservation-card customer-account-card">
+    <div class="reservation-section-heading">
+      <div>
+        <span class="reservation-eyebrow">LIÊN HỆ</span>
+        <h2>Số điện thoại</h2>
+        <p>Bạn có thể thêm, sửa hoặc xóa số điện thoại.</p>
+      </div>
+    </div>
+    <form th:action="@{/users/{id}/phone(id=${currentUserProfile.id})}" method="post" class="customer-account-phone-form">
+      <input type="hidden" name="returnTo" value="account">
+      <label for="customerPhone">Số điện thoại</label>
+      <div class="customer-account-phone-controls">
+        <input id="customerPhone" name="phone" type="tel" class="form-control" maxlength="20"
+               th:value="${currentUserProfile.phone}" placeholder="Nhập số điện thoại">
+        <button class="reservation-button" type="submit"><i class="bi bi-check2"></i> Lưu số điện thoại</button>
+      </div>
+      <button class="btn btn-link p-0 customer-account-phone-delete" type="submit"
+              name="deletePhone" value="true" th:if="${currentUserProfile.phone != null and !currentUserProfile.phone.isBlank()}">
+        Xóa số điện thoại
+      </button>
+    </form>
+  </section>
+
+  <div class="customer-account-actions">
+    <a class="reservation-button secondary-button" th:href="@{/dashboard}"><i class="bi bi-house"></i> Trang chủ</a>
+    <a class="reservation-button" th:href="@{/reservations}"><i class="bi bi-calendar-plus"></i> Đặt chỗ ngay</a>
+  </div>
+</main>
+</body>
+</html>

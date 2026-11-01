@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Hộp thư hỗ trợ')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('support')}"></div>
+<main class="container pb-5">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+      <h1 class="h3 mb-1">Hộp thư hỗ trợ</h1>
+      <p class="text-muted mb-0">Trao đổi trực tiếp với khách hàng và xử lý tin nhắn theo thời gian thực.</p>
+    </div>
+    <span class="badge text-bg-success"><i class="bi bi-broadcast"></i> Hỗ trợ trực tuyến</span>
+  </div>
+  <section class="support-inbox" id="support-inbox" aria-label="Hộp thư trò chuyện">
+    <aside class="support-inbox-sidebar">
+      <h2>Cuộc trò chuyện</h2>
+      <div class="support-conversation-list" id="support-conversation-list" aria-live="polite"></div>
+    </aside>
+    <section class="support-inbox-chat">
+      <header class="support-inbox-chat-header">
+        <div class="support-inbox-chat-heading">
+          <h2 class="h6 mb-0" id="support-conversation-title">Chọn một cuộc trò chuyện</h2>
+          <span class="support-inbox-status" id="support-inbox-status">Đang kết nối...</span>
+        </div>
+        <button class="btn btn-outline-danger btn-sm" id="support-block-customer" type="button" hidden>
+          Chặn khách hàng
+        </button>
+      </header>
+      <div class="support-inbox-messages" id="support-inbox-messages" role="log" aria-live="polite">
+        <p class="support-inbox-empty" id="support-empty-state">Tin nhắn mới của khách hàng sẽ hiển thị tại đây.</p>
+      </div>
+      <form class="support-admin-compose" id="support-admin-compose" hidden>
+        <label class="visually-hidden" for="support-admin-input">Nhập nội dung trả lời</label>
+        <textarea id="support-admin-input" rows="2" maxlength="2000"
+                  placeholder="Nhập tin nhắn trả lời..."></textarea>
+        <input class="visually-hidden" id="support-admin-image" type="file"
+               accept="image/jpeg,image/png,image/gif">
+        <label class="btn btn-outline-secondary align-self-end" for="support-admin-image"
+               aria-label="Chọn ảnh gửi cho khách hàng">
+          <i class="bi bi-image" aria-hidden="true"></i>
+        </label>
+        <span class="support-image-name" id="support-admin-image-name" aria-live="polite"></span>
+        <button class="btn btn-success align-self-end" type="submit">
+          Gửi <i class="bi bi-send-fill" aria-hidden="true"></i>
+        </button>
+        <p class="support-compose-error" id="support-admin-compose-error" role="alert" hidden></p>
+      </form>
+    </section>
+  </section>
+</main>
+<script defer th:src="@{/js/admin-support-inbox.js(v=2)}"></script>
+</body>
+</html>

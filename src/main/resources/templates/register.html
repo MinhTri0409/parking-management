@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Đăng ký khách hàng')}"></head>
+<body class="login-page">
+<main class="login-screen">
+  <section class="login-showcase">
+    <div class="showcase-top">
+      <a class="login-brand" th:href="@{/login}">
+        <span class="login-brand-mark"><i class="bi bi-p-square-fill"></i></span>
+        <span>NHÀ XE HIẾU MINH</span>
+      </a>
+      <span class="showcase-caption">ĐẶT CHỖ NHANH CHÓNG VÀ AN TOÀN</span>
+    </div>
+    <div class="showcase-copy">
+      <span class="showcase-kicker"><span></span> DÀNH CHO KHÁCH HÀNG</span>
+      <h1>Chủ động<br>chỗ đỗ xe<br><span>của bạn.</span></h1>
+      <p>Tạo tài khoản để xem chỗ trống, đặt vị trí và theo dõi lịch sử đặt chỗ.</p>
+    </div>
+    <div class="showcase-foot"><span><i class="bi bi-shield-check"></i> Thông tin tài khoản được bảo mật</span></div>
+  </section>
+
+  <section class="login-main">
+    <div class="login-card">
+      <div class="login-heading">
+        <span class="login-eyebrow">BẮT ĐẦU ĐẶT CHỖ</span>
+        <h2>Tạo tài khoản khách</h2>
+        <p>Đăng ký miễn phí để đặt vị trí đỗ xe trực tuyến.</p>
+      </div>
+      <div class="alert alert-danger login-alert" role="alert" th:if="${error}" th:text="${error}"></div>
+      <form th:action="@{/register}" method="post" class="login-form">
+        <div class="field-block">
+          <label for="fullName">Họ và tên</label>
+          <input id="fullName" name="fullName" type="text" maxlength="100" autocomplete="name" required>
+        </div>
+        <div class="field-block">
+          <label for="phone">Số điện thoại</label>
+          <input id="phone" name="phone" type="tel" maxlength="20" pattern="[0-9+().\- ]{7,20}"
+                 autocomplete="tel" placeholder="Nhập số điện thoại" required>
+        </div>
+        <div class="field-block">
+          <label for="username">Tên đăng nhập</label>
+          <input id="username" name="username" type="text" minlength="3" maxlength="50"
+                 pattern="[A-Za-z0-9._-]{3,50}" autocomplete="username" required>
+        </div>
+        <div class="field-block">
+          <label for="password">Mật khẩu</label>
+          <input id="password" name="password" type="password" minlength="8" autocomplete="new-password" required>
+        </div>
+        <div class="field-block">
+          <label for="confirmPassword">Xác nhận mật khẩu</label>
+          <input id="confirmPassword" name="confirmPassword" type="password" minlength="8"
+                 autocomplete="new-password" required>
+        </div>
+        <button type="submit" class="login-submit">Tạo tài khoản <i class="bi bi-arrow-right"></i></button>
+      </form>
+      <p class="mt-4 text-center">Đã có tài khoản? <a th:href="@{/login}" class="fw-semibold">Đăng nhập</a></p>
+    </div>
+  </section>
+</main>
+</body>
+</html>

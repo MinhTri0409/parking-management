@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments :: head('Vé tháng')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('tickets')}"></div>
+<div class="container">
+  <div th:replace="~{fragments :: alerts}"></div>
+  <div class="card mb-4"><div class="card-body">
+    <h5>Đăng ký vé tháng</h5>
+    <form th:action="@{/admin/tickets}" method="post" class="row g-2">
+      <div class="col-md-3"><input name="licensePlate" class="form-control" placeholder="Biển số" required></div>
+      <div class="col-md-3"><input name="ownerName" class="form-control" placeholder="Tên chủ xe" required></div>
+      <div class="col-md-2"><input name="phone" class="form-control" placeholder="Số điện thoại"></div>
+      <div class="col-md-2"><select name="vehicleType" class="form-select">
+        <option th:each="t : ${types}" th:value="${t}" th:text="${t.label}"></option></select></div>
+      <div class="col-md-1"><input name="months" type="number" min="1" max="24" value="1" class="form-control" title="Số tháng"></div>
+      <div class="col-md-1"><button class="btn btn-primary w-100">Lưu</button></div>
+    </form>
+  </div></div>
+
+  <form th:action="@{/admin/tickets}" method="get" class="row g-2 mb-3">
+    <div class="col-md-9"><input name="q" th:value="${q}" class="form-control" placeholder="Tìm theo biển số"></div>
+    <div class="col-md-3"><button class="btn btn-outline-primary w-100">Tìm kiếm</button></div>
+  </form>
+  <div class="table-responsive"><table class="table table-striped align-middle">
+    <thead><tr><th>Biển số</th><th>Chủ xe</th><th>SĐT</th><th>Loại</th><th>Hiệu lực gộp</th><th>Ngày đã dùng / còn lại</th><th>Tổng giá (đ)</th><th>Hoàn dự kiến / đã hoàn (đ)</th><th>Trạng thái</th><th sec:authorize="hasRole('ADMIN')">Chi tiết / thao tác</th></tr></thead>
+    <tbody>
+      <tr th:each="group : ${ticketGroups.content}">
+        <td>
+          <span th:text="${group.primaryTicket.licensePlate}"></span>
+          <small class="d-block text-muted" th:if="${group.tickets.size() > 1}"
+                 th:text="|Gộp ${group.tickets.size()} vé trùng|"></small>
+        </td>
+        <td th:text="${group.primaryTicket.ownerName}"></td>
+        <td th:text="${group.primaryTicket.phone}"></td>
+        <td th:text="${group.primaryTicket.vehicleType.label}"></td>
+        <td>
+          <span th:if="${group.earliestStartDate != null and group.latestEndDate != null}"
+                th:text="${#temporals.format(group.earliestStartDate,'dd/MM/yyyy')} + ' - ' + ${#temporals.format(group.latestEndDate,'dd/MM/yyyy')}"></span>
+          <span th:if="${group.earliestStartDate == null or group.latestEndDate == null}">Không rõ</span>
+        </td>
+        <td th:text="|${group.usedDays} ngày / ${group.remainingDays} ngày|"></td>
+        <td th:text="${#numbers.formatInteger(group.totalPrice,0,'POINT')}"></td>
+        <td th:text="${#numbers.formatInteger(group.refundAmount,0,'POINT')}"></td>
+        <td>
+          <span class="badge text-bg-danger" th:if="${group.cancelled}" th:text="${group.statusLabel()}"></span>
+          <span class="badge text-bg-warning" th:if="${!group.cancelled and group.active and group.renewalCancelled}"
+                th:text="${group.statusLabel()}"></span>
+          <span class="badge text-bg-success" th:if="${!group.cancelled and group.active and !group.renewalCancelled}"
+                th:text="${group.statusLabel()}"></span>
+          <span class="badge text-bg-secondary" th:if="${!group.cancelled and !group.active}"
+                th:text="${group.statusLabel()}"></span>
+          <small class="d-block text-muted" th:if="${group.cancelled}">Đã tính hoàn tiền</small>
+          <small class="d-block text-muted" th:if="${!group.cancelled}">Ước tính nếu hủy hôm nay</small>
+        </td>
+        <td sec:authorize="hasRole('ADMIN')">
+          <details>
+            <summary>Chi tiết <span th:text="${group.tickets.size()}"></span> vé</summary>
+            <div th:each="t : ${group.tickets}" class="border rounded p-2 mt-2">
+              <div>
+                <strong th:text="|${t.ownerName} — ${#numbers.formatInteger(t.price,0,'POINT')} đ|"></strong>
+                <span th:if="${t.startDate != null and t.endDate != null}"
+                      th:text="| · ${#temporals.format(t.startDate,'dd/MM/yyyy')} - ${#temporals.format(t.endDate,'dd/MM/yyyy')}|"></span>
+                <span th:if="${t.cancelledAt != null}" class="badge text-bg-danger">Đã hủy</span>
+              </div>
+              <div class="d-flex flex-wrap align-items-start gap-2 mt-2">
+                <details>
+                  <summary class="btn btn-sm btn-outline-primary">Đổi tên/biển số</summary>
+                  <form class="mt-2" th:action="@{/admin/tickets/{id}/rename(id=${t.id})}" method="post">
+                    <input name="licensePlate" class="form-control form-control-sm mb-2" th:value="${t.licensePlate}"
+                           placeholder="Biển số" maxlength="20" required>
+                    <input name="ownerName" class="form-control form-control-sm mb-2" th:value="${t.ownerName}"
+                           placeholder="Tên chủ xe" maxlength="100" required>
+                    <button class="btn btn-sm btn-primary" type="submit">Lưu thay đổi</button>
+                  </form>
+                </details>
+                <form th:if="${t.cancelledAt == null and !t.renewalCancelled}"
+                      th:action="@{/admin/tickets/{id}/cancel-renewal(id=${t.id})}" method="post"
+                      onsubmit="return confirm('Ngừng gia hạn vé này? Vé vẫn dùng được đến hết hạn và không phát sinh hoàn tiền.')">
+                  <button class="btn btn-sm btn-outline-warning">Ngừng gia hạn</button>
+                </form>
+                <form th:if="${t.cancelledAt == null and t.endDate != null and !t.endDate.isBefore(today)}"
+                      th:action="@{/admin/tickets/{id}/cancel(id=${t.id})}" method="post"
+                      onsubmit="return confirm('Hủy vé ngay? Hệ thống sẽ tính phần hoàn theo số ngày chưa sử dụng; nhân viên cần hoàn tiền thủ công.')">
+                  <button class="btn btn-sm btn-outline-danger">Hủy ngay + hoàn</button>
+                </form>
+                <form th:action="@{/admin/tickets/{id}/delete(id=${t.id})}" method="post"
+                      onsubmit="return confirm('Xóa hẳn bản ghi vé tháng này? Thao tác này không tính hoặc lưu tiền hoàn.')">
+                  <button class="btn btn-sm btn-outline-secondary">Xóa bản ghi</button>
+                </form>
+              </div>
+            </div>
+          </details>
+        </td>
+      </tr>
+      <tr th:if="${ticketGroups.empty}" sec:authorize="hasRole('ADMIN')"><td colspan="10" class="text-center text-muted">Chưa có vé tháng</td></tr>
+      <tr th:if="${ticketGroups.empty}" sec:authorize="!hasRole('ADMIN')"><td colspan="9" class="text-center text-muted">Chưa có vé tháng</td></tr>
+    </tbody>
+  </table></div>
+  <div th:replace="~{fragments :: pagination(${ticketGroups}, ${paginationUrlPrefix})}"></div>
+</div>
+</body>
+</html>

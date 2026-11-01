@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Quản lý đặt chỗ')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('reservation-management')}"></div>
+<main class="container reservation-container">
+  <div th:replace="~{fragments :: alerts}"></div>
+  <section class="reservation-welcome">
+    <div>
+      <span class="reservation-eyebrow">VẬN HÀNH</span>
+      <h1>Đơn đặt chỗ trực tuyến</h1>
+      <p>Đối chiếu giao dịch ngân hàng trước khi xác nhận thanh toán cho khách.</p>
+    </div>
+    <div class="reservation-welcome-icon"><i class="bi bi-clipboard-check"></i></div>
+  </section>
+  <section class="reservation-card reservation-bookings">
+    <div class="table-responsive">
+      <table class="table reservation-table align-middle">
+        <thead><tr><th>Mã / khách</th><th>Xe / vị trí</th><th>Thời gian</th><th>Số tiền</th><th>Trạng thái</th><th>Xử lý</th></tr></thead>
+        <tbody>
+        <tr th:each="reservation : ${reservations}">
+          <td><strong class="booking-code" th:text="${reservation.bookingCode}">P-BOOKING</strong>
+            <small th:text="|${reservation.customerName} (${reservation.customerUsername})|">Khách hàng</small>
+            <small th:if="${#strings.isEmpty(customerPhones[reservation.customerUsername])}">Chưa cập nhật SĐT</small>
+            <small th:unless="${#strings.isEmpty(customerPhones[reservation.customerUsername])}"
+                   th:text="|SĐT: ${customerPhones[reservation.customerUsername]}|">SĐT khách hàng</small></td>
+          <td><strong th:text="${reservation.licensePlate}">51A-12345</strong>
+            <small th:text="|${reservation.vehicleType.label} · ${reservation.slotCode}|">Ô tô · CAR-001</small></td>
+          <td><small th:text="${reservation.startTime}">Nhận xe</small><small th:text="|đến ${reservation.endTime}|">Trả xe</small></td>
+          <td><strong th:text="|${#numbers.formatInteger(reservation.totalAmount, 0, 'POINT')} đ|">25.000 đ</strong></td>
+          <td><span class="reservation-status" th:text="${reservation.status.label}"
+                    th:classappend="${reservation.status.name() == 'CONFIRMED' or reservation.status.name() == 'ARRIVED' or reservation.status.name() == 'COMPLETED'} ? ' status-confirmed' : (${reservation.status.name() == 'CANCELLED'} ? ' status-cancelled' : ' status-pending')">Chờ xác nhận</span></td>
+          <td>
+            <form th:if="${reservation.status.name() == 'PENDING_PAYMENT'}"
+                  th:action="@{/admin/reservations/{id}/confirm-payment(id=${reservation.id})}" method="post">
+              <label class="payment-verify-label">
+                <input type="checkbox" name="paymentVerified" value="true" required>
+                Đã kiểm tra tiền vào
+              </label>
+              <button type="submit" class="btn btn-sm btn-primary mt-1">Xác nhận thanh toán</button>
+            </form>
+            <span th:if="${reservation.status.name() != 'PENDING_PAYMENT'}" class="text-muted">—</span>
+          </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(reservations)}"><td colspan="6" class="text-center text-muted py-5">Chưa có đơn đặt chỗ.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <div th:replace="~{fragments :: pagination(${reservationPage}, ${paginationUrlPrefix})}"></div>
+</main>
+</body>
+</html>

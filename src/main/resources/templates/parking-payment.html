@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Thanh toán trả xe')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('parking')}"></div>
+<main class="container payment-page">
+  <div th:replace="~{fragments :: alerts}"></div>
+
+  <a class="payment-back" th:href="${returnTo == 'dashboard'} ? @{/admin} : @{/admin/parking}">
+    <i class="bi bi-arrow-left"></i> Quay lại
+  </a>
+
+  <section class="payment-card">
+    <div class="payment-copy">
+      <span class="payment-kicker" th:text="${prepaidReservation ? 'ĐẶT CHỖ ĐÃ THANH TOÁN' : 'THANH TOÁN KHI TRẢ XE'}">THANH TOÁN KHI TRẢ XE</span>
+      <h1 th:text="${prepaidReservation ? 'Phụ thu trả xe trễ' : 'Chọn phương thức thanh toán'}">Chọn phương thức thanh toán</h1>
+      <p class="payment-lead" th:if="${prepaidReservation}">
+        Đơn <strong th:text="${bookingCode}">P-XXXXXXXXXX</strong> đã thanh toán đến
+        <strong th:text="${#temporals.format(reservedUntil, 'dd/MM/yyyy HH:mm')}">29/10/2026 18:00</strong>.
+        Trả xe đúng giờ hoặc sớm hơn không mất thêm phí; mỗi giờ trễ được tính theo giá đặt chỗ.
+      </p>
+      <p class="payment-lead" th:unless="${prepaidReservation}">Chọn cách thanh toán, hoàn tất giao dịch bên ngoài nếu cần, rồi nhân viên xác nhận để cho xe ra.</p>
+
+      <div class="payment-vehicle">
+        <span class="payment-vehicle-icon"><i class="bi bi-car-front"></i></span>
+        <div>
+          <span>Biển số xe</span>
+          <strong th:text="${record.licensePlate}">51A-12345</strong>
+        </div>
+        <div class="payment-slot" th:if="${record.slotCode != null}">
+          <span>Vị trí</span>
+          <strong th:text="${record.slotCode}">MOTORBIKE-001</strong>
+        </div>
+      </div>
+
+      <div class="payment-amount">
+        <span th:text="${prepaidReservation ? 'Phụ thu ' + extraHours + ' giờ trả trễ' : 'Số tiền cần thanh toán'}">Số tiền cần thanh toán</span>
+        <strong><span th:text="${#numbers.formatInteger(amount,0,'POINT')}">5.000</span><small>đ</small></strong>
+      </div>
+
+      <form class="payment-form" th:action="@{/admin/parking/checkout/{id}/confirm(id=${record.id})}" method="post">
+        <input type="hidden" name="returnTo" th:value="${returnTo}">
+        <fieldset class="payment-methods" th:if="${amount > 0}">
+          <legend>Phương thức</legend>
+          <label class="payment-method-option" th:each="method : ${paymentMethods}"
+                 th:classappend="${method.name() == 'QR'} ? ' selected'">
+            <input type="radio" name="paymentMethod" th:value="${method}" th:checked="${method.name() == 'QR'}" required>
+            <span class="method-option-icon"
+                  th:classappend="${method.name() == 'CASH'} ? ' cash-icon' : (${method.name() == 'CARD'} ? ' card-icon' : ' qr-icon')">
+              <i th:class="${method.name() == 'CASH'} ? 'bi bi-cash-coin' : (${method.name() == 'CARD'} ? 'bi bi-credit-card-2-front' : 'bi bi-qr-code')"></i>
+            </span>
+            <span class="method-option-label" th:text="${method.label}">Phương thức</span>
+          </label>
+        </fieldset>
+
+        <div class="payment-method-details" data-method-details="QR" th:if="${amount > 0}">
+          <strong><i class="bi bi-qr-code-scan"></i> Chuyển khoản bằng QR</strong>
+          <ol>
+            <li>Mở ứng dụng ngân hàng và quét mã MB Bank bên cạnh.</li>
+            <li>Nhập đúng số tiền <strong th:text="|${#numbers.formatInteger(amount,0,'POINT')} đ|">5.000 đ</strong>.</li>
+            <li>Nhân viên chỉ xác nhận sau khi kiểm tra tiền đã vào tài khoản.</li>
+          </ol>
+          <div class="payment-warning">
+            <i class="bi bi-shield-exclamation"></i>
+            <span>Mã QR tĩnh không tự xác minh giao dịch hoặc tự điền số tiền. Hãy kiểm tra app MB Bank trước khi xác nhận.</span>
+          </div>
+        </div>
+        <div class="payment-method-details" data-method-details="CASH" hidden th:if="${amount > 0}">
+          <strong><i class="bi bi-cash-coin"></i> Thu tiền mặt</strong>
+          <p>Nhận và kiểm đếm đủ <strong th:text="|${#numbers.formatInteger(amount,0,'POINT')} đ|">5.000 đ</strong> từ khách trước khi xác nhận.</p>
+        </div>
+        <div class="payment-method-details" data-method-details="CARD" hidden th:if="${amount > 0}">
+          <strong><i class="bi bi-credit-card-2-front"></i> Thẻ tín dụng qua máy POS</strong>
+          <p>Thực hiện thanh toán bằng thẻ tín dụng trên máy POS. Chỉ xác nhận khi máy POS báo giao dịch thành công.</p>
+          <span class="pos-note"><i class="bi bi-info-circle"></i> Hệ thống chưa kết nối trực tiếp với máy POS.</span>
+        </div>
+
+        <label class="payment-confirm-check" th:if="${amount > 0}">
+          <input type="checkbox" name="paymentConfirmed" value="true" required>
+          <span id="payment-confirm-label">Tôi đã kiểm tra giao dịch chuyển khoản thành công</span>
+        </label>
+        <div class="payment-actions">
+          <a class="payment-cancel" th:href="${returnTo == 'dashboard'} ? @{/admin} : @{/admin/parking}" th:if="${amount > 0}">Chưa thanh toán</a>
+          <button class="payment-confirm" type="submit">
+            <i class="bi bi-check-circle"></i>
+            <span th:text="${amount > 0} ? 'Xác nhận thanh toán, cho xe ra' : 'Cho xe ra (không thu thêm)'">Xác nhận thanh toán, cho xe ra</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <aside class="payment-qr-panel" data-qr-panel th:if="${amount > 0}">
+      <div class="payment-qr-heading">
+        <span class="mb-bank-mark">MB</span>
+        <div><strong>MB Bank</strong><small>Quét mã để chuyển khoản</small></div>
+      </div>
+      <img class="payment-qr-image" th:src="@{/admin/parking/payment/qr}" alt="Mã QR thanh toán MB Bank">
+      <div class="payment-reference">
+        <span>Nội dung chuyển khoản</span>
+        <strong th:text="${prepaidReservation ? bookingCode : 'QUẢN LÝ NHÀ XE HIẾU MINH-' + record.id}">QUẢN LÝ NHÀ XE HIẾU MINH-123</strong>
+      </div>
+      <p class="payment-qr-note"><i class="bi bi-info-circle"></i> Nhập nội dung chuyển khoản nếu ứng dụng ngân hàng cho phép.</p>
+    </aside>
+  </section>
+</main>
+<script>
+  (() => {
+    const options = [...document.querySelectorAll('input[name="paymentMethod"]')];
+    const labels = {
+      QR: 'Tôi đã kiểm tra giao dịch chuyển khoản thành công',
+      CASH: 'Tôi đã nhận đủ tiền mặt từ khách',
+      CARD: 'Máy POS đã báo giao dịch thẻ tín dụng thành công'
+    };
+    const syncMethod = () => {
+      const method = options.find((option) => option.checked)?.value || 'QR';
+      document.querySelectorAll('.payment-method-option').forEach((option) => {
+        option.classList.toggle('selected', option.querySelector('input').checked);
+      });
+      document.querySelectorAll('[data-method-details]').forEach((panel) => {
+        panel.hidden = panel.dataset.methodDetails !== method;
+      });
+      const qrPanel = document.querySelector('[data-qr-panel]');
+      if (qrPanel) qrPanel.hidden = method !== 'QR';
+      const confirmLabel = document.getElementById('payment-confirm-label');
+      if (confirmLabel) confirmLabel.textContent = labels[method];
+    };
+    options.forEach((option) => option.addEventListener('change', syncMethod));
+    syncMethod();
+  })();
+</script>
+</body>
+</html>

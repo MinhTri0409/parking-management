@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments :: head('Đặt chỗ trực tuyến')}"></head>
+<body class="reservation-page">
+<div th:replace="~{fragments :: nav('reservations')}"></div>
+<main class="container reservation-container">
+  <div th:replace="~{fragments :: alerts}"></div>
+
+  <section class="reservation-welcome">
+    <div>
+      <span class="reservation-eyebrow">ĐẶT CHỖ TRỰC TUYẾN</span>
+      <h1>Chọn chỗ đỗ phù hợp</h1>
+      <p>Xem chỗ trống theo khung giờ, đặt trước và thanh toán chuyển khoản.</p>
+    </div>
+    <div class="reservation-welcome-icon"><i class="bi bi-p-square-fill"></i></div>
+  </section>
+
+  <section class="reservation-card reservation-search">
+    <form method="get" th:action="@{/reservations}" class="reservation-filter-form">
+      <label>
+        <span>Loại xe</span>
+        <select name="type" class="form-select" aria-label="Loại xe">
+          <option th:each="type : ${types}" th:value="${type.name()}" th:text="${type.label}"
+                  th:selected="${type.name() == selectedType.name()}"></option>
+        </select>
+      </label>
+      <label>
+        <span>Thời gian nhận xe</span>
+        <input class="form-control" type="datetime-local" name="start" th:value="${startValue}" required>
+      </label>
+      <label>
+        <span>Thời gian trả xe dự kiến</span>
+        <input class="form-control" type="datetime-local" name="end" th:value="${endValue}" required>
+      </label>
+      <button type="submit" class="reservation-button secondary-button">
+        <i class="bi bi-search"></i> Xem chỗ trống
+      </button>
+    </form>
+  </section>
+
+  <section class="reservation-layout">
+    <div class="reservation-main-column">
+      <section class="reservation-card">
+        <div class="reservation-section-heading">
+          <div>
+            <span class="reservation-eyebrow">SƠ ĐỒ BÃI XE</span>
+            <h2>Chọn một vị trí còn trống</h2>
+            <p>Chỗ màu đỏ đã có xe hoặc đã được đặt trong khoảng thời gian bạn chọn.</p>
+          </div>
+          <span class="reservation-legend"><i></i> Còn trống</span>
+        </div>
+
+        <form id="booking-form" method="post" th:action="@{/reservations}">
+          <input type="hidden" name="type" th:value="${selectedType}">
+          <input type="hidden" name="start" th:value="${startValue}">
+          <input type="hidden" name="end" th:value="${endValue}">
+          <input type="hidden" name="slotCode" id="selected-slot" required>
+
+          <div class="reservation-slot-grid" th:if="${!#lists.isEmpty(slots)}">
+            <label class="reservation-slot" th:each="slot : ${slots}"
+                   th:classappend="${slot.available} ? ' slot-available' : ' slot-unavailable'"
+                   th:attr="data-available=${slot.available}">
+              <input type="radio" name="slotChoice" th:value="${slot.code}"
+                     th:disabled="${!slot.available}" th:required="${slot.available}">
+              <span class="reservation-slot-code" th:text="${slot.code}">CAR-001</span>
+              <i th:class="${selectedType.name() == 'CAR'} ? 'bi bi-car-front-fill' : (${selectedType.name() == 'MOTORBIKE'} ? 'bi bi-scooter' : 'bi bi-bicycle')"></i>
+              <span class="reservation-slot-state" th:text="${slot.available} ? 'Còn trống' : 'Đã đặt'">Còn trống</span>
+            </label>
+          </div>
+          <div class="reservation-empty" th:if="${#lists.isEmpty(slots)}">
+            <i class="bi bi-cone-striped"></i>
+              <p>Không có vị trí phù hợp hoặc chưa cấu hình sức chứa cho loại xe này.</p>
+          </div>
+
+          <div class="reservation-plate-row">
+            <label for="plate">Biển số xe</label>
+            <input id="plate" name="plate" class="form-control" maxlength="20" placeholder="Ví dụ: 51A-123.45" required>
+          </div>
+        </form>
+      </section>
+
+      <section class="reservation-card reservation-bookings">
+        <div class="reservation-section-heading">
+          <div>
+            <span class="reservation-eyebrow">CÁ NHÂN</span>
+            <h2>Đơn đặt chỗ của tôi</h2>
+          </div>
+          <span class="reservation-count" th:text="${#lists.size(reservations)} + ' đơn'">0 đơn</span>
+        </div>
+        <div class="table-responsive" th:if="${!#lists.isEmpty(reservations)}">
+          <table class="table reservation-table align-middle">
+            <thead><tr><th>Mã đặt chỗ</th><th>Xe / vị trí</th><th>Thời gian</th><th>Thanh toán</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="reservation : ${reservations}">
+              <td><strong class="booking-code" th:text="${reservation.bookingCode}">P-BOOKING</strong>
+                <span class="reservation-status" th:text="${reservation.status.label}"
+                      th:classappend="${reservation.status.name() == 'CONFIRMED' or reservation.status.name() == 'ARRIVED' or reservation.status.name() == 'COMPLETED'} ? ' status-confirmed' : (${reservation.status.name() == 'CANCELLED'} ? ' status-cancelled' : ' status-pending')">Đang xử lý</span>
+              </td>
+              <td><strong th:text="${reservation.licensePlate}">51A-12345</strong>
+                <small th:text="|${reservation.vehicleType.label} · ${reservation.slotCode}|">Ô tô · CAR-001</small>
+              </td>
+              <td><small th:text="${reservation.startTime}">Thời gian</small><small th:text="|đến ${reservation.endTime}|">đến</small></td>
+              <td><strong th:text="|${#numbers.formatInteger(reservation.totalAmount, 0, 'POINT')} đ|">25.000 đ</strong></td>
+              <td>
+                <form th:if="${reservation.status.name() == 'PENDING_PAYMENT'}"
+                      th:action="@{/reservations/{id}/cancel(id=${reservation.id})}" method="post">
+                  <button class="btn btn-sm btn-outline-danger" type="submit">Hủy</button>
+                </form>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="reservation-empty compact-empty" th:if="${#lists.isEmpty(reservations)}">
+          <i class="bi bi-calendar2-check"></i><p>Bạn chưa có đơn đặt chỗ nào.</p>
+        </div>
+      </section>
+    </div>
+
+    <aside class="reservation-side-column">
+      <section class="reservation-card reservation-summary">
+        <span class="reservation-eyebrow">CHI PHÍ DỰ KIẾN</span>
+        <h2>Tóm tắt đặt chỗ</h2>
+        <div class="reservation-summary-line"><span>Loại xe</span><strong th:text="${selectedType.label}">Ô tô</strong></div>
+        <div class="reservation-summary-line"><span>Thời gian</span><strong id="duration-label">2 giờ</strong></div>
+        <div class="reservation-summary-line"><span>Vị trí</span><strong id="selected-slot-label">Chưa chọn</strong></div>
+        <div class="reservation-summary-total">
+          <span>Tổng thanh toán</span>
+          <strong th:text="|${#numbers.formatInteger(estimatedAmount, 0, 'POINT')} đ|">0 đ</strong>
+        </div>
+        <p class="reservation-price-note">Giá theo giờ được quản trị viên cấu hình. Mỗi phần giờ lẻ được tính tròn lên 1 giờ.</p>
+        <button class="reservation-button confirm-button" type="submit" form="booking-form">
+          <i class="bi bi-shield-check"></i> Đặt chỗ và thanh toán
+        </button>
+      </section>
+
+      <section class="reservation-card reservation-payment-hint" th:if="${createdReservation == null}">
+        <span class="reservation-payment-icon"><i class="bi bi-qr-code"></i></span>
+        <h3>Thanh toán chuyển khoản</h3>
+        <p>Sau khi đặt chỗ, quét mã QR và ghi đúng mã đặt chỗ. Nhân viên sẽ xác nhận sau khi kiểm tra giao dịch.</p>
+      </section>
+
+      <section class="reservation-card reservation-payment-confirmation" th:if="${createdReservation != null}">
+        <div class="payment-success-mark"><i class="bi bi-check-lg"></i></div>
+        <span class="reservation-eyebrow">ĐÃ GHI NHẬN ĐẶT CHỖ</span>
+        <h2 th:text="${createdReservation.bookingCode}">P-BOOKING</h2>
+        <p>Quét QR và chuyển đúng số tiền. Ghi mã đặt chỗ vào nội dung chuyển khoản; chỗ được giữ trong lúc chờ nhân viên xác nhận.</p>
+        <img th:src="@{/reservations/payment/qr}" alt="Mã QR thanh toán của nhà xe" class="reservation-qr">
+        <div class="reservation-transfer">
+          <span>Số tiền</span><strong th:text="|${#numbers.formatInteger(createdReservation.totalAmount, 0, 'POINT')} đ|">25.000 đ</strong>
+          <span>Nội dung chuyển khoản</span><strong th:text="${createdReservation.bookingCode}">P-BOOKING</strong>
+        </div>
+        <span class="reservation-status status-pending" th:text="${createdReservation.status.label}">Chờ xác nhận</span>
+      </section>
+    </aside>
+  </section>
+</main>
+<script>
+  (() => {
+    const filterForm = document.querySelector('.reservation-filter-form');
+    const typeSelect = filterForm?.querySelector('select[name="type"]');
+    if (typeSelect) {
+      typeSelect.addEventListener('change', () => {
+        if (filterForm.reportValidity()) filterForm.requestSubmit();
+      });
+    }
+
+    const radios = document.querySelectorAll('input[name="slotChoice"]');
+    const selectedSlot = document.getElementById('selected-slot');
+    const selectedLabel = document.getElementById('selected-slot-label');
+    radios.forEach((radio) => radio.addEventListener('change', () => {
+      if (selectedSlot) selectedSlot.value = radio.value;
+      if (selectedLabel) selectedLabel.textContent = radio.value;
+      document.querySelectorAll('.reservation-slot').forEach((slot) => slot.classList.remove('slot-selected'));
+      radio.closest('.reservation-slot')?.classList.add('slot-selected');
+    }));
+
+    const startInput = document.querySelector('input[name="start"]');
+    const endInput = document.querySelector('input[name="end"]');
+    if (startInput && endInput) {
+      const start = new Date(startInput.value);
+      const end = new Date(endInput.value);
+      const hours = Math.max(1, Math.ceil((end - start) / 3600000));
+      const durationLabel = document.getElementById('duration-label');
+      if (durationLabel) durationLabel.textContent = Number.isFinite(hours) ? `${hours} giờ` : '—';
+    }
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+# Created at 2026-10-29T17:18:38.825
+Boot Manifest-JAR contains absolute paths in classpath 'D:\parking-management\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+'other' has different root
+

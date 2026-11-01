@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Xe trong bãi')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('parking')}"></div>
+<div class="container">
+  <div th:replace="~{fragments :: alerts}"></div>
+  <div class="card mb-4"><div class="card-body">
+    <h5>Cho xe vào bãi</h5>
+    <form th:action="@{/admin/parking/checkin}" method="post" class="row g-2">
+      <div class="col-md-5"><input name="plate" class="form-control" placeholder="Biển số, ví dụ 59A1-123.45" required maxlength="20"></div>
+      <div class="col-md-4"><select name="type" class="form-select">
+        <option th:each="t : ${types}" th:value="${t}" th:text="${t.label}"></option></select></div>
+      <div class="col-md-3"><button class="btn btn-primary w-100">Cho vào</button></div>
+    </form>
+  </div></div>
+
+  <h5>Xe đang trong bãi (<span th:text="${records.totalElements}">0</span>)</h5>
+  <div class="table-responsive"><table class="table table-striped align-middle">
+    <thead><tr><th>Vị trí</th><th>Biển số</th><th>Loại</th><th>Giờ vào</th><th>Vé tháng</th><th></th></tr></thead>
+    <tbody>
+      <tr th:each="r : ${records.content}">
+        <td><span class="badge text-bg-secondary" th:text="${r.slotCode != null} ? ${r.slotCode} : 'Chưa gán'">CAR-001</span></td>
+        <td><strong th:text="${r.licensePlate}"></strong></td>
+        <td th:text="${r.vehicleType.label}"></td>
+        <td th:text="${#temporals.format(r.checkIn,'dd/MM/yyyy HH:mm')}"></td>
+        <td><span class="badge text-bg-info" th:if="${r.monthlyTicket}">Có</span></td>
+        <td class="text-end">
+          <form th:action="@{/admin/parking/checkout/{id}(id=${r.id})}" method="post"
+                onsubmit="return confirm('Tiếp tục đến bước thanh toán cho xe này?')">
+            <button class="btn btn-sm btn-success">Thanh toán / Cho xe ra</button>
+          </form>
+        </td>
+      </tr>
+      <tr th:if="${records.empty}"><td colspan="6" class="text-center text-muted">Bãi đang trống</td></tr>
+    </tbody>
+  </table></div>
+  <div th:replace="~{fragments :: pagination(${records}, ${paginationUrlPrefix})}"></div>
+</div>
+</body>
+</html>

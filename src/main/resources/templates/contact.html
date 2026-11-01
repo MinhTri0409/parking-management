@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments :: head('Liên hệ')}"></head>
+<body class="landing-page contact-page">
+<header class="landing-header">
+  <nav class="landing-nav" aria-label="Điều hướng chính">
+    <a class="landing-brand" th:href="@{/}" aria-label="Nhà xe Hiếu Minh - Trang chủ">
+      <span class="brand-mark"><i class="bi bi-p-square-fill"></i></span>
+      <span>NHÀ XE <strong>HIẾU MINH</strong></span>
+    </a>
+    <div class="landing-nav-links">
+      <a th:href="@{/}">Trang chủ</a>
+      <a th:href="@{/}#gioi-thieu">Giới thiệu</a>
+      <a th:href="@{/}#dich-vu">Dịch vụ</a>
+    </div>
+    <div class="landing-nav-actions">
+      <a class="landing-login" sec:authorize="isAnonymous()" th:href="@{/login}">Đăng nhập</a>
+      <a class="landing-login" sec:authorize="hasRole('ADMIN')" th:href="@{/admin}">Quản lý</a>
+      <a class="landing-login" sec:authorize="hasRole('STAFF')" th:href="@{/admin}">Điều hành</a>
+      <div sec:authorize="hasRole('CUSTOMER')"
+           th:replace="~{fragments :: accountMenu('landing-login landing-account-trigger', 'Tài khoản', 'dashboard')}"></div>
+      <form class="landing-logout-form" th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <button type="submit" class="landing-login landing-logout-button">Đăng xuất</button>
+      </form>
+    </div>
+  </nav>
+</header>
+
+<main class="contact-main">
+  <section class="contact-hero">
+    <span class="landing-eyebrow"><i class="bi bi-chat-dots"></i> NHÀ XE HIẾU MINH</span>
+    <h1>Chúng tôi luôn<br><span>sẵn sàng lắng nghe.</span></h1>
+    <p>Gửi câu hỏi hoặc lời nhắn cho chúng tôi. Nhân viên sẽ tiếp nhận và phản hồi qua thông tin bạn cung cấp.</p>
+  </section>
+
+  <section class="contact-layout" aria-label="Thông tin và biểu mẫu liên hệ">
+    <aside class="contact-info-panel">
+      <span class="contact-panel-eyebrow">KẾT NỐI VỚI CHÚNG TÔI</span>
+      <h2>Nhà xe Hiếu Minh</h2>
+      <p class="contact-panel-description">Liên hệ trực tiếp hoặc gửi lời nhắn, chúng tôi rất vui được hỗ trợ bạn.</p>
+      <div class="contact-info-list">
+        <a href="tel:0862282415" class="contact-info-item">
+          <span><i class="bi bi-telephone"></i></span>
+          <div><small>Điện thoại</small><strong>0862 282 415</strong></div>
+        </a>
+        <a href="mailto:trantridung10122006@gmail.com" class="contact-info-item">
+          <span><i class="bi bi-envelope"></i></span>
+          <div><small>Email</small><strong>trantridung10122006@gmail.com</strong></div>
+        </a>
+        <a href="https://www.google.com/maps/search/?api=1&amp;query=100%2F3%20Quang%20Trung%2C%20T%C4%83ng%20Nh%C6%A1n%20Ph%C3%BA%2C%20TPHCM"
+           target="_blank" rel="noopener noreferrer" class="contact-info-item">
+          <span><i class="bi bi-geo-alt"></i></span>
+          <div><small>Địa chỉ</small><strong>100/3 Quang Trung, Tăng Nhơn Phú, TPHCM</strong></div>
+        </a>
+      </div>
+      <div class="contact-panel-foot"><i class="bi bi-shield-check"></i> Thông tin của bạn chỉ được dùng để phản hồi yêu cầu liên hệ.</div>
+    </aside>
+
+    <section class="contact-form-panel">
+      <div class="contact-form-heading">
+        <span class="landing-eyebrow">GỬI LỜI NHẮN</span>
+        <h2>Liên hệ với chúng tôi</h2>
+        <p>Vui lòng điền thông tin để nhà xe có thể phản hồi.</p>
+      </div>
+      <div class="alert alert-success contact-alert" role="status" th:if="${sent}">
+        <i class="bi bi-check-circle"></i>
+        <span th:if="${emailSent}">Lời nhắn đã được lưu và gửi đến nhà xe. Cảm ơn bạn!</span>
+        <span th:unless="${emailSent}">Lời nhắn đã được lưu vào hệ thống nhưng chưa gửi được email. Vui lòng liên hệ trực tiếp nếu cần gấp.</span>
+      </div>
+      <div class="alert alert-danger contact-alert" role="alert" th:if="${error}" th:text="${error}"></div>
+
+      <form th:action="@{/contact}" th:object="${contactForm}" method="post" class="contact-form">
+        <div class="contact-form-grid">
+          <label class="contact-field">
+            <span>Tên bạn <b>*</b></span>
+            <input th:field="*{name}" type="text" maxlength="100" autocomplete="name" placeholder="Nhập họ và tên" required>
+          </label>
+          <label class="contact-field">
+            <span>Số điện thoại <b>*</b></span>
+            <input th:field="*{phone}" type="tel" maxlength="20" autocomplete="tel" placeholder="Nhập số điện thoại" required>
+          </label>
+          <label class="contact-field">
+            <span>Email <b>*</b></span>
+            <input th:field="*{email}" type="email" maxlength="254" autocomplete="email" placeholder="name@example.com" required>
+          </label>
+          <fieldset class="contact-customer-type">
+            <legend>Bạn là</legend>
+            <label><input th:field="*{customerType}" type="radio" value="NEW" required> Khách hàng mới</label>
+            <label><input th:field="*{customerType}" type="radio" value="EXISTING"> Khách hàng hiện tại</label>
+          </fieldset>
+          <label class="contact-field contact-message-field">
+            <span>Nội dung <b>*</b></span>
+            <textarea th:field="*{message}" rows="5" minlength="10" maxlength="5000"
+                      placeholder="Bạn cần chúng tôi hỗ trợ điều gì?" required></textarea>
+            <small>Từ 10 đến 5.000 ký tự</small>
+          </label>
+        </div>
+        <button class="contact-submit" type="submit">Gửi lời nhắn <i class="bi bi-arrow-right"></i></button>
+      </form>
+    </section>
+  </section>
+</main>
+
+<footer class="landing-footer contact-footer">
+  <a class="landing-brand" th:href="@{/}"><span class="brand-mark"><i class="bi bi-p-square-fill"></i></span><span>NHÀ XE <strong>HIẾU MINH</strong></span></a>
+  <span>Đặt chỗ thuận tiện · Gửi xe an tâm</span>
+  <a th:href="@{/}">Về trang chủ</a>
+</footer>
+</body>
+</html>

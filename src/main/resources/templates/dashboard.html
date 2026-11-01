@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Sơ đồ bãi xe')}"></head>
+<body class="parking-dashboard">
+<div th:replace="~{fragments :: nav('home')}"></div>
+
+<main class="container-fluid live-dashboard">
+  <div th:replace="~{fragments :: alerts}"></div>
+
+  <section class="dashboard-heading">
+    <div>
+      <span class="dashboard-kicker">ĐIỀU HÀNH BÃI XE</span>
+      <h1>Sơ đồ bãi đỗ xe</h1>
+      <p>Trạng thái vị trí và lượt xe đang hoạt động trong hệ thống.</p>
+    </div>
+    <div class="dashboard-heading-actions">
+      <form th:if="${overflowMonthlyTicketCount > 0}"
+            th:action="@{/admin/parking/checkout-overflow-monthly}" method="post"
+            onsubmit="return confirm('Check-out toàn bộ ' + this.dataset.count + ' xe vé tháng vượt sức chứa? Xe phải thanh toán sẽ không bị ảnh hưởng.')"
+            th:attr="data-count=${overflowMonthlyTicketCount}">
+        <button class="overflow-checkout-all" type="submit">
+          <i class="bi bi-box-arrow-right"></i>
+          Check-out xe miễn phí vượt chỗ
+          <span th:text="${overflowMonthlyTicketCount}">0</span>
+        </button>
+      </form>
+      <div class="dashboard-date">
+        <i class="bi bi-calendar3"></i>
+        <span th:text="${#temporals.format(#temporals.createNow(), 'EEEE, dd/MM/yyyy')}">Ngày hôm nay</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="row g-3 dashboard-summary" aria-label="Tổng quan bãi xe">
+    <div class="col-6 col-xl-2-4">
+      <article class="summary-card">
+        <span class="summary-icon cyan"><i class="bi bi-grid-3x3-gap"></i></span>
+        <div class="summary-label">Tổng sức chứa</div>
+        <div class="summary-value"><span th:text="${totalCapacity}">0</span><small> vị trí</small></div>
+      </article>
+    </div>
+    <div class="col-6 col-xl-2-4">
+      <article class="summary-card">
+        <span class="summary-icon rose"><i class="bi bi-car-front"></i></span>
+        <div class="summary-label">Đang trong bãi</div>
+        <div class="summary-value" th:text="${occupiedCount}">0</div>
+      </article>
+    </div>
+    <div class="col-6 col-xl-2-4">
+      <article class="summary-card">
+        <span class="summary-icon green"><i class="bi bi-check2-circle"></i></span>
+        <div class="summary-label">Vị trí còn trống</div>
+        <div class="summary-value" th:text="${availableCount}">0</div>
+      </article>
+    </div>
+    <div class="col-6 col-xl-2-4">
+      <article class="summary-card">
+        <span class="summary-icon violet"><i class="bi bi-box-arrow-in-down"></i></span>
+        <div class="summary-label">Xe vào hôm nay</div>
+        <div class="summary-value" th:text="${todayCount}">0</div>
+      </article>
+    </div>
+    <div class="col-6 col-xl-2-4">
+      <article class="summary-card">
+        <span class="summary-icon amber"><i class="bi bi-cash-stack"></i></span>
+        <div class="summary-label">Doanh thu hôm nay</div>
+        <div class="summary-value">
+          <span th:text="${#numbers.formatInteger(todayRevenue,0,'POINT')}">0</span><small> đ</small>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="dashboard-toolbar" aria-label="Lọc sơ đồ bãi xe">
+    <div class="toolbar-title">
+      <span class="toolbar-icon"><i class="bi bi-map"></i></span>
+      <div>
+        <h2>Sơ đồ vị trí</h2>
+        <p>Dữ liệu trực tiếp từ lượt gửi xe và bảng giá</p>
+      </div>
+    </div>
+    <div class="toolbar-controls">
+      <label class="filter-control">
+        <i class="bi bi-funnel"></i>
+        <select id="type-filter" aria-label="Lọc theo loại xe">
+          <option value="ALL">Tất cả loại xe</option>
+          <option th:each="type : ${T(com.doan.parking.entity.VehicleType).values()}"
+                  th:value="${type.name()}" th:text="${type.label}">Loại xe</option>
+        </select>
+      </label>
+      <label class="search-control">
+        <i class="bi bi-search"></i>
+        <input id="spot-search" type="search" placeholder="Tìm biển số, vị trí..."
+               aria-label="Tìm biển số hoặc vị trí">
+      </label>
+      <div class="status-filters" role="group" aria-label="Lọc trạng thái">
+        <button type="button" class="status-filter active" data-filter="all">Tất cả</button>
+        <button type="button" class="status-filter" data-filter="occupied">Có xe</button>
+        <button type="button" class="status-filter" data-filter="reserved">Đã đặt</button>
+        <button type="button" class="status-filter" data-filter="available">Còn trống</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="parking-map" aria-label="Sơ đồ vị trí bãi xe">
+    <div class="map-legend">
+      <span><i class="legend-dot occupied-dot"></i> Đang có xe</span>
+      <span><i class="legend-dot reserved-dot"></i> Đã được đặt</span>
+      <span><i class="legend-dot available-dot"></i> Còn trống — nhấn để check-in</span>
+      <a th:href="@{/admin/parking/history}"><i class="bi bi-clock-history"></i> Lịch sử vào / ra</a>
+    </div>
+
+    <div class="parking-section" th:each="section : ${parkingSections}"
+         th:attr="data-section-type=${section.type.name()}"
+         th:if="${section.stats.capacity > 0 or !#lists.isEmpty(section.slots) or !#lists.isEmpty(section.overflowRecords)}">
+      <header class="parking-section-heading">
+        <div class="section-title-group">
+          <span class="section-vehicle-icon"
+                th:classappend="${section.type.name() == 'CAR'} ? ' car-icon' : (${section.type.name() == 'MOTORELECTRIC'} ? ' electric-icon' : ' bike-icon')">
+            <i th:class="${section.type.name() == 'CAR'} ? 'bi bi-car-front-fill' : (${section.type.name() == 'MOTORELECTRIC'} ? 'bi bi-lightning-charge-fill' : 'bi bi-scooter')"></i>
+          </span>
+          <div>
+            <h3 th:text="${section.stats.label}">Loại xe</h3>
+            <p>Sức chứa <span th:text="${section.stats.capacity}">0</span> vị trí</p>
+          </div>
+        </div>
+        <span class="section-occupancy">
+          <strong th:text="${section.stats.used}">0</strong>
+          <span>/</span>
+          <span th:text="${section.stats.capacity}">0</span>
+          <small>đang đỗ</small>
+        </span>
+      </header>
+
+      <div class="spots-grid">
+        <button type="button" class="parking-spot is-available"
+                th:each="spot : ${section.slots}" th:if="${spot.record == null and spot.reservation == null}"
+                th:attr="data-status='available', data-type=${section.type.name()}, data-plate='', data-slot=${spot.code}"
+                onclick="openCheckin(this)">
+          <span class="spot-topline">
+            <span class="spot-code" th:text="${spot.code}">CAR-001</span>
+            <i class="bi bi-plus-circle"></i>
+          </span>
+          <span class="spot-state"><i class="bi bi-check-circle-fill"></i> Còn trống</span>
+          <span class="spot-hint">Nhấn để nhận xe</span>
+        </button>
+
+        <button type="button" class="parking-spot is-reserved"
+                th:each="spot : ${section.slots}" th:if="${spot.record == null and spot.reservation != null}"
+                th:attr="data-status='reserved', data-type=${section.type.name()},
+                         data-plate=${spot.reservation.licensePlate}, data-slot=${spot.code}"
+                onclick="openCheckin(this)">
+          <span class="spot-topline">
+            <span class="spot-code" th:text="${spot.code}">CAR-001</span>
+            <i class="bi bi-calendar-check"></i>
+          </span>
+          <span class="reserved-plate" th:text="${spot.reservation.licensePlate}">51A-12345</span>
+          <span class="spot-state">
+            <span><i class="bi bi-clock"></i>
+              <span th:text="${#temporals.format(spot.reservation.startTime, 'HH:mm dd/MM')}">08:30 01/01</span>
+            </span>
+            <span class="reservation-indicator">Đã đặt</span>
+          </span>
+          <span class="spot-hint">Nhấn để nhận xe đã đặt</span>
+        </button>
+
+        <article class="parking-spot is-occupied"
+                 th:each="spot : ${section.slots}" th:if="${spot.record != null}"
+                 th:attr="data-status='occupied', data-type=${section.type.name()}, data-plate=${spot.record.licensePlate}, data-slot=${spot.code}">
+          <div class="spot-topline">
+            <span class="spot-code" th:text="${spot.code}">CAR-001</span>
+            <i class="bi bi-car-front-fill"></i>
+          </div>
+          <div class="occupied-plate" th:text="${spot.record.licensePlate}">51A-12345</div>
+          <div class="spot-state">
+            <span><i class="bi bi-clock"></i>
+              <span th:text="${#temporals.format(spot.record.checkIn, 'HH:mm dd/MM')}">08:30 01/01</span>
+            </span>
+            <span class="ticket-indicator" th:if="${spot.record.monthlyTicket}">Vé tháng</span>
+          </div>
+          <form th:action="@{/admin/parking/checkout/{id}(id=${spot.record.id})}" method="post"
+                onsubmit="return confirm('Tiếp tục đến bước thanh toán cho xe ' + this.dataset.plate + '?')"
+                th:attr="data-plate=${spot.record.licensePlate}">
+            <input type="hidden" name="returnTo" value="dashboard">
+            <button type="submit" class="spot-checkout">
+              <i class="bi bi-box-arrow-right"></i> Check-out
+            </button>
+          </form>
+        </article>
+      </div>
+
+      <div class="overflow-area" th:if="${!#lists.isEmpty(section.overflowRecords)}">
+        <div class="overflow-heading">
+          <strong><i class="bi bi-exclamation-triangle"></i> Xe vượt sức chứa</strong>
+          <span th:text="${#lists.size(section.overflowRecords)} + ' xe chưa có vị trí'">0 xe chưa có vị trí</span>
+        </div>
+        <p class="overflow-description">Dữ liệu xe được giữ nguyên. Hãy xử lý xe đang vượt số vị trí cấu hình để hệ thống có thể gán chỗ trống.</p>
+        <div class="spots-grid">
+          <article class="parking-spot is-occupied overflow-spot"
+                   th:each="record : ${section.overflowRecords}"
+                   th:attr="data-status='occupied', data-type=${section.type.name()}, data-plate=${record.licensePlate}, data-slot=''">
+            <div class="spot-topline">
+              <span class="spot-code" th:text="${record.licensePlate}">51A-12345</span>
+              <i class="bi bi-exclamation-circle"></i>
+            </div>
+            <div class="occupied-plate">Chưa có vị trí</div>
+            <div class="spot-state">
+              <span><i class="bi bi-clock"></i>
+                <span th:text="${#temporals.format(record.checkIn, 'HH:mm dd/MM')}">08:30 01/01</span>
+              </span>
+              <span class="overflow-indicator">Vượt sức chứa</span>
+            </div>
+            <form th:action="@{/admin/parking/checkout/{id}(id=${record.id})}" method="post"
+                  onsubmit="return confirm('Tiếp tục đến bước thanh toán cho xe ' + this.dataset.plate + '?')"
+                  th:attr="data-plate=${record.licensePlate}">
+              <input type="hidden" name="returnTo" value="dashboard">
+              <button type="submit" class="spot-checkout">
+                <i class="bi bi-box-arrow-right"></i> Check-out
+              </button>
+            </form>
+          </article>
+        </div>
+      </div>
+
+      <div class="empty-section" th:if="${section.stats.capacity == 0 and #lists.isEmpty(section.overflowRecords)}">
+        Chưa cấu hình sức chứa cho loại xe này.
+      </div>
+    </div>
+
+    <div class="no-spots-match" id="no-spots-match" hidden>Không tìm thấy vị trí phù hợp.</div>
+  </section>
+</main>
+
+<div class="checkin-modal" id="checkin-modal" aria-hidden="true">
+  <div class="checkin-backdrop" onclick="closeCheckin()"></div>
+  <section class="checkin-dialog" role="dialog" aria-modal="true" aria-labelledby="checkin-title">
+    <header class="checkin-dialog-header">
+      <div>
+        <span class="dialog-kicker">TIẾP NHẬN PHƯƠNG TIỆN</span>
+        <h2 id="checkin-title">Check-in xe</h2>
+      </div>
+      <button type="button" class="dialog-close" onclick="closeCheckin()" aria-label="Đóng">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </header>
+    <form th:action="@{/admin/parking/checkin}" method="post" class="checkin-form">
+      <input type="hidden" name="returnTo" value="dashboard">
+      <input type="hidden" name="slotCode" id="checkin-slot">
+      <input type="hidden" name="type" id="checkin-type">
+      <div class="selected-slot">
+        <i class="bi bi-p-square"></i>
+        <span>Vị trí đã chọn</span>
+        <strong id="checkin-slot-label">CAR-001</strong>
+      </div>
+      <label for="checkin-plate">Biển số xe</label>
+      <input id="checkin-plate" name="plate" type="text" maxlength="20"
+             placeholder="Ví dụ: 51A-123.45" autocomplete="off" required>
+      <p class="checkin-note"><i class="bi bi-info-circle"></i> Hệ thống sẽ tự kiểm tra vé tháng còn hiệu lực.</p>
+      <div class="checkin-actions">
+        <button type="button" class="cancel-checkin" onclick="closeCheckin()">Hủy</button>
+        <button type="submit" class="confirm-checkin"><i class="bi bi-box-arrow-in-down"></i> Xác nhận xe vào</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<script>
+  (() => {
+    const modal = document.getElementById('checkin-modal');
+    const plateInput = document.getElementById('checkin-plate');
+    const typeFilter = document.getElementById('type-filter');
+    const searchInput = document.getElementById('spot-search');
+    const emptyMessage = document.getElementById('no-spots-match');
+    let statusFilter = 'all';
+
+    window.openCheckin = (spot) => {
+      const slot = spot.dataset.slot;
+      document.getElementById('checkin-slot').value = slot;
+      document.getElementById('checkin-slot-label').textContent = slot;
+      document.getElementById('checkin-type').value = spot.dataset.type;
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('modal-open');
+      plateInput.focus();
+    };
+
+    window.closeCheckin = () => {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+    };
+
+    const applyFilters = () => {
+      const type = typeFilter.value;
+      const query = searchInput.value.trim().toLocaleLowerCase();
+      let visibleSpots = 0;
+
+      document.querySelectorAll('.parking-section').forEach((section) => {
+        const typeMatches = type === 'ALL' || section.dataset.sectionType === type;
+        let sectionHasVisibleSpot = false;
+        section.querySelectorAll('.parking-spot').forEach((spot) => {
+          const statusMatches = statusFilter === 'all' || spot.dataset.status === statusFilter;
+          const queryMatches = !query || spot.dataset.slot.toLocaleLowerCase().includes(query)
+            || spot.dataset.plate.toLocaleLowerCase().includes(query);
+          const visible = typeMatches && statusMatches && queryMatches;
+          spot.hidden = !visible;
+          if (visible) {
+            sectionHasVisibleSpot = true;
+            visibleSpots += 1;
+          }
+        });
+        section.hidden = !typeMatches || (!sectionHasVisibleSpot && query.length > 0);
+      });
+      emptyMessage.hidden = visibleSpots > 0;
+    };
+
+    typeFilter.addEventListener('change', applyFilters);
+    searchInput.addEventListener('input', applyFilters);
+    document.querySelectorAll('.status-filter').forEach((button) => {
+      button.addEventListener('click', () => {
+        statusFilter = button.dataset.filter;
+        document.querySelectorAll('.status-filter').forEach((item) => item.classList.remove('active'));
+        button.classList.add('active');
+        applyFilters();
+      });
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && modal.classList.contains('is-open')) closeCheckin();
+    });
+  })();
+</script>
+</body>
+</html>

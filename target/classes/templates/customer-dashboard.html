@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Dashboard khách hàng')}"></head>
+<body class="reservation-page customer-booking-dashboard">
+<div th:replace="~{fragments :: nav('reservations')}"></div>
+
+<main class="container reservation-container customer-dashboard">
+  <div th:replace="~{fragments :: alerts}"></div>
+
+  <section class="reservation-welcome customer-dashboard-welcome">
+    <div>
+      <span class="reservation-eyebrow">HIẾU MINH PARKING · KHU VỰC KHÁCH HÀNG</span>
+      <h1>Xin chào, <span th:text="${currentUserProfile.fullName != null and !currentUserProfile.fullName.isBlank()} ? ${currentUserProfile.fullName} : ${currentUserProfile.username}">Khách hàng</span></h1>
+      <p>Thông tin tài khoản và các đơn đặt chỗ của bạn được cập nhật từ hệ thống.</p>
+    </div>
+    <div class="reservation-welcome-icon"><i class="bi bi-person-check"></i></div>
+  </section>
+
+  <section class="customer-dashboard-stats" aria-label="Tổng quan tài khoản và đặt chỗ">
+    <article class="reservation-card customer-dashboard-stat">
+      <span class="customer-stat-icon"><i class="bi bi-person-badge"></i></span>
+      <div><span>Tài khoản</span><strong class="customer-stat-username" th:text="${currentUserProfile.username}">username</strong></div>
+    </article>
+    <article class="reservation-card customer-dashboard-stat">
+      <span class="customer-stat-icon"><i class="bi bi-calendar2-check"></i></span>
+      <div><span>Tổng đơn đặt chỗ</span><strong th:text="${totalBookings}">0</strong></div>
+    </article>
+    <article class="reservation-card customer-dashboard-stat">
+      <span class="customer-stat-icon pending-stat-icon"><i class="bi bi-hourglass-split"></i></span>
+      <div><span>Chờ thanh toán</span><strong th:text="${pendingPaymentCount}">0</strong></div>
+    </article>
+    <article class="reservation-card customer-dashboard-stat">
+      <span class="customer-stat-icon confirmed-stat-icon"><i class="bi bi-check-circle"></i></span>
+      <div><span>Đã xác nhận / đang gửi</span><strong th:text="${confirmedCount}">0</strong></div>
+    </article>
+  </section>
+
+  <section class="reservation-card customer-dashboard-bookings customer-upcoming-card">
+    <div class="reservation-section-heading">
+      <div>
+        <span class="reservation-eyebrow">LỊCH CỦA BẠN</span>
+        <h2>Lịch đặt chỗ sắp tới</h2>
+        <p>Danh sách được lấy từ các đơn đặt chỗ gắn với tài khoản hiện tại.</p>
+      </div>
+      <span class="reservation-count" th:text="${completedCount} + ' đơn hoàn tất'">0 đơn hoàn tất</span>
+    </div>
+    <div class="customer-upcoming-list" th:if="${!#lists.isEmpty(upcomingBookings)}">
+      <article class="customer-upcoming-item" th:each="booking : ${upcomingBookings}">
+        <span class="customer-upcoming-icon"><i class="bi bi-car-front"></i></span>
+        <div class="customer-upcoming-details">
+          <strong th:text="|${booking.vehicleType.label} · ${booking.licensePlate}|">Ô tô · 51A-12345</strong>
+          <span th:text="|${#temporals.format(booking.startTime, 'dd/MM/yyyy HH:mm')} – ${#temporals.format(booking.endTime, 'HH:mm')}|">Thời gian</span>
+        </div>
+        <span class="reservation-status"
+              th:classappend="${booking.status.name() == 'CONFIRMED' or booking.status.name() == 'ARRIVED'} ? ' status-confirmed' : ' status-pending'"
+              th:text="${booking.status.label}">Đang xử lý</span>
+        <strong class="customer-upcoming-slot" th:text="${booking.slotCode}">CAR-001</strong>
+      </article>
+    </div>
+    <div class="reservation-empty compact-empty" th:if="${#lists.isEmpty(upcomingBookings)}">
+      <i class="bi bi-calendar2-plus"></i>
+      <p>Bạn chưa có đơn đặt chỗ sắp tới. Chọn thời gian và vị trí bên dưới để bắt đầu.</p>
+    </div>
+  </section>
+
+  <section class="customer-booking-heading">
+    <span class="reservation-eyebrow">DỊCH VỤ TRỰC TUYẾN</span>
+    <h2>Đặt chỗ gửi xe trực tuyến</h2>
+    <p>Chọn loại xe, khung giờ và vị trí đang trống trong dữ liệu bãi xe.</p>
+  </section>
+
+  <section class="reservation-card customer-filter-card">
+    <form method="get" th:action="@{/reservations}" class="reservation-filter-form customer-booking-filter">
+      <label>
+        <span>Loại phương tiện</span>
+        <select name="type" class="form-select" aria-label="Loại phương tiện">
+          <option th:each="type : ${types}" th:value="${type.name()}" th:text="${type.label}"
+                  th:selected="${type.name() == selectedType.name()}"></option>
+        </select>
+      </label>
+      <label>
+        <span>Giờ vào dự kiến</span>
+        <input class="form-control" type="datetime-local" name="start" th:value="${startValue}" required>
+      </label>
+      <label>
+        <span>Giờ ra dự kiến</span>
+        <input class="form-control" type="datetime-local" name="end" th:value="${endValue}" required>
+      </label>
+      <button type="submit" class="reservation-button customer-search-button">
+        <i class="bi bi-search"></i> Cập nhật sơ đồ
+      </button>
+    </form>
+    <p id="booking-range-notice" class="reservation-price-note" role="status" hidden>
+      Khung giờ đã thay đổi. Hãy cập nhật sơ đồ để kiểm tra chỗ trống trước khi đặt.
+    </p>
+  </section>
+
+  <form id="booking-form" method="post" th:action="@{/reservations}" class="customer-booking-layout"
+        th:classappend="${createdReservation != null} ? ' customer-booking-layout-with-payment'">
+    <input type="hidden" name="type" th:value="${selectedType}">
+    <input type="hidden" name="start" th:value="${startValue}">
+    <input type="hidden" name="end" th:value="${endValue}">
+    <input type="hidden" name="slotCode" id="selected-slot" required>
+
+    <section class="reservation-card customer-booking-details">
+      <div class="customer-card-title">
+        <i class="bi bi-p-square-fill"></i>
+        <h3>Thông tin đặt vị trí</h3>
+      </div>
+
+      <label class="customer-field-label" for="plate">Biển số xe <span>*</span></label>
+      <input id="plate" name="plate" class="form-control customer-booking-input"
+             maxlength="20" placeholder="Ví dụ: 51A-123.45" autocomplete="off" required>
+
+      <div class="customer-booking-summary" th:attr="data-hourly-rate=${hourlyRate}">
+        <div><span>Loại xe</span><strong th:text="${selectedType.label}">Ô tô</strong></div>
+        <div><span>Vị trí chọn</span><strong id="selected-slot-label">Chưa chọn</strong></div>
+        <div><span>Tổng thời gian</span><strong id="duration-label">2 giờ</strong></div>
+        <div><span>Đơn giá</span><strong id="hourly-rate-label"
+              th:text="|${#numbers.formatInteger(hourlyRate, 0, 'POINT')} đ / giờ|">0 đ / giờ</strong></div>
+        <div class="customer-booking-total"><span>Tạm tính</span><strong id="estimated-total"
+              th:text="|${#numbers.formatInteger(estimatedAmount, 0, 'POINT')} đ|">0 đ</strong></div>
+      </div>
+      <p class="reservation-price-note">Giá và thời lượng được tính theo bảng giá trong database; phần giờ lẻ được làm tròn lên.</p>
+
+      <button class="reservation-button customer-confirm-button" type="submit" id="booking-submit" disabled>
+        <i class="bi bi-check-circle"></i> Xác nhận đặt chỗ
+      </button>
+    </section>
+
+    <section class="reservation-card reservation-payment-confirmation customer-created-booking"
+             th:if="${createdReservation != null}">
+      <div class="payment-success-mark"><i class="bi bi-check-lg"></i></div>
+      <span class="reservation-eyebrow">ĐÃ GHI NHẬN ĐẶT CHỖ</span>
+      <h2 th:text="${createdReservation.bookingCode}">P-BOOKING</h2>
+      <p>Quét mã QR và chuyển đúng số tiền. Ghi mã đặt chỗ vào nội dung chuyển khoản; vị trí được giữ trong lúc chờ nhân viên xác nhận.</p>
+      <img th:src="@{/reservations/payment/qr}" alt="Mã QR thanh toán của nhà xe" class="reservation-qr">
+      <div class="reservation-transfer">
+        <span>Số tiền</span><strong th:text="|${#numbers.formatInteger(createdReservation.totalAmount, 0, 'POINT')} đ|">25.000 đ</strong>
+        <span>Nội dung chuyển khoản</span><strong th:text="${createdReservation.bookingCode}">P-BOOKING</strong>
+      </div>
+      <span class="reservation-status status-pending" th:text="${createdReservation.status.label}">Chờ xác nhận</span>
+    </section>
+
+    <section class="reservation-card customer-slot-card">
+      <div class="reservation-section-heading">
+        <div>
+          <span class="reservation-eyebrow">SƠ ĐỒ VỊ TRÍ</span>
+          <h3>Chọn ô đỗ xe</h3>
+          <p>Trạng thái vị trí được đối chiếu với xe trong bãi và đơn đặt trùng khung giờ.</p>
+        </div>
+        <span class="customer-slot-availability">
+          <i class="bi bi-check-circle-fill"></i>
+          <strong th:text="${availableSlotCount}">0</strong> vị trí trống
+        </span>
+      </div>
+      <div class="customer-slot-legend">
+        <span><i class="slot-legend-free"></i> Trống</span>
+        <span><i class="slot-legend-busy"></i> Đã có xe / đã đặt</span>
+        <span><i class="slot-legend-selected"></i> Đang chọn</span>
+      </div>
+      <div class="customer-slot-grid" th:if="${!#lists.isEmpty(slots)}">
+        <button type="button" class="customer-slot"
+                th:each="slot : ${slots}"
+                th:classappend="${slot.available} ? ' customer-slot-free' : ' customer-slot-busy'"
+                th:attr="data-slot-code=${slot.code}, data-available=${slot.available}"
+                th:disabled="${!slot.available}">
+          <span class="customer-slot-code" th:text="${slot.code}">CAR-001</span>
+          <i th:class="${selectedType.name() == 'CAR'} ? 'bi bi-car-front-fill' : (${selectedType.name() == 'MOTORBIKE'} ? 'bi bi-scooter' : 'bi bi-bicycle')"></i>
+          <span class="customer-slot-state" th:text="${slot.available} ? 'Trống' : 'Đã đặt'">Trống</span>
+        </button>
+      </div>
+      <div class="reservation-empty" th:if="${#lists.isEmpty(slots)}">
+        <i class="bi bi-cone-striped"></i>
+        <p>Không có vị trí cho loại xe hoặc khung giờ này.</p>
+      </div>
+      <div class="customer-booking-greeting" th:if="${createdReservation != null}">
+        <i class="bi bi-heart-fill" aria-hidden="true"></i>
+        <strong>Chúc quý khách một ngày tốt lành!</strong>
+        <span>Cảm ơn quý khách đã lựa chọn Hiếu Minh Parking <span aria-label="trái tim">&lt;3</span></span>
+      </div>
+    </section>
+  </form>
+
+  <section class="reservation-card customer-dashboard-bookings customer-recent-bookings">
+    <div class="reservation-section-heading">
+      <div>
+        <span class="reservation-eyebrow">DỮ LIỆU TÀI KHOẢN</span>
+        <h2>Đơn đặt chỗ của tôi</h2>
+        <p>Đơn chỉ hiển thị cho khách hàng đang đăng nhập.</p>
+      </div>
+      <span class="reservation-count" th:text="${totalBookings} + ' đơn'">0 đơn</span>
+    </div>
+    <div class="table-responsive" th:if="${!#lists.isEmpty(recentBookings)}">
+      <table class="table reservation-table align-middle">
+        <thead><tr><th>Mã đặt chỗ</th><th>Xe / vị trí</th><th>Thời gian</th><th>Trạng thái</th><th>Chi phí</th><th></th></tr></thead>
+        <tbody>
+        <tr th:each="booking : ${recentBookings}"
+            th:attr="data-booking-code=${booking.bookingCode}, data-reservation-status=${booking.status.name()}">
+          <td><strong class="booking-code" th:text="${booking.bookingCode}">P-BOOKING</strong></td>
+          <td><strong th:text="${booking.licensePlate}">51A-12345</strong>
+            <small th:text="|${booking.vehicleType.label} · ${booking.slotCode}|">Ô tô · CAR-001</small>
+          </td>
+          <td><small th:text="|${#temporals.format(booking.startTime, 'dd/MM/yyyy HH:mm')} – ${#temporals.format(booking.endTime, 'HH:mm')}|">Thời gian</small></td>
+          <td><span class="reservation-status" data-reservation-status
+                    th:classappend="${booking.status.name() == 'CONFIRMED' or booking.status.name() == 'ARRIVED' or booking.status.name() == 'COMPLETED'} ? ' status-confirmed' : (${booking.status.name() == 'CANCELLED'} ? ' status-cancelled' : ' status-pending')"
+                    th:text="${booking.status.label}">Đang xử lý</span></td>
+          <td><strong th:text="|${#numbers.formatInteger(booking.totalAmount, 0, 'POINT')} đ|">25.000 đ</strong></td>
+          <td>
+            <form th:if="${booking.status.name() == 'PENDING_PAYMENT'}"
+                  th:action="@{/reservations/{id}/cancel(id=${booking.id})}" method="post">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Hủy</button>
+            </form>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div th:replace="~{fragments :: pagination(${reservationPage}, ${paginationUrlPrefix})}"></div>
+    <div class="reservation-empty compact-empty" th:if="${#lists.isEmpty(recentBookings)}">
+      <i class="bi bi-calendar2-check"></i>
+      <p>Bạn chưa có đơn đặt chỗ nào.</p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  (() => {
+    const filterForm = document.querySelector('.customer-booking-filter');
+    if (!filterForm) return;
+
+    const vehicleType = filterForm.querySelector('[name="type"]');
+    const startInput = filterForm.querySelector('[name="start"]');
+    const endInput = filterForm.querySelector('[name="end"]');
+    const bookingForm = document.getElementById('booking-form');
+    const selectedSlotInput = document.getElementById('selected-slot');
+    const selectedSlotLabel = document.getElementById('selected-slot-label');
+    const submitButton = document.getElementById('booking-submit');
+    const bookingTypeInput = bookingForm?.querySelector('[name="type"]');
+    const bookingStartInput = bookingForm?.querySelector('[name="start"]');
+    const bookingEndInput = bookingForm?.querySelector('[name="end"]');
+    const rangeNotice = document.getElementById('booking-range-notice');
+    const plateInput = document.getElementById('plate');
+    const summary = document.querySelector('.customer-booking-summary');
+    const hourlyRate = Number(summary?.dataset?.hourlyRate ?? 0);
+    const money = new Intl.NumberFormat('vi-VN');
+    let selectedCode = '';
+
+    const updateEstimate = () => {
+      if (!startInput || !endInput) return;
+      const start = new Date(startInput.value);
+      const end = new Date(endInput.value);
+      const minutes = (end - start) / 60000;
+      const hours = Number.isFinite(minutes) && minutes > 0 ? Math.max(1, Math.ceil(minutes / 60)) : 0;
+      document.getElementById('duration-label').textContent = hours ? `${hours} giờ` : '—';
+      document.getElementById('estimated-total').textContent =
+        `${money.format(hours * hourlyRate)} đ`;
+    };
+
+    const updateSubmit = () => {
+      if (!submitButton || !plateInput) return;
+      const currentAvailability = vehicleType.value === bookingTypeInput?.value
+        && startInput.value === bookingStartInput?.value
+        && endInput.value === bookingEndInput?.value;
+      if (rangeNotice) rangeNotice.hidden = currentAvailability;
+      if (!currentAvailability && selectedCode) {
+        selectedCode = '';
+        if (selectedSlotInput) selectedSlotInput.value = '';
+        if (selectedSlotLabel) selectedSlotLabel.textContent = 'Chưa chọn';
+        document.querySelectorAll('.customer-slot-selected').forEach((slot) => {
+          slot.classList.remove('customer-slot-selected');
+        });
+      }
+      submitButton.disabled = !currentAvailability || !selectedCode
+        || !plateInput.value.trim() || hourlyRate <= 0;
+    };
+
+    if (vehicleType) {
+      vehicleType.addEventListener('change', () => {
+        if (filterForm.reportValidity()) filterForm.requestSubmit();
+      });
+    }
+
+    [startInput, endInput].filter(Boolean).forEach((field) => {
+      const updateRange = () => {
+        updateEstimate();
+        updateSubmit();
+      };
+      field.addEventListener('change', updateRange);
+      field.addEventListener('input', updateRange);
+    });
+
+    if (plateInput) {
+      plateInput.addEventListener('input', updateSubmit);
+    }
+
+    document.querySelectorAll('.customer-slot-free').forEach((slot) => {
+      slot.addEventListener('click', () => {
+        if (vehicleType.value !== bookingTypeInput?.value
+            || startInput.value !== bookingStartInput?.value
+            || endInput.value !== bookingEndInput?.value) {
+          return;
+        }
+        selectedCode = slot.dataset.slotCode;
+        if (selectedSlotInput) selectedSlotInput.value = selectedCode;
+        if (selectedSlotLabel) selectedSlotLabel.textContent = selectedCode;
+        document.querySelectorAll('.customer-slot-selected').forEach((item) => {
+          item.classList.remove('customer-slot-selected');
+        });
+        slot.classList.add('customer-slot-selected');
+        updateSubmit();
+      });
+    });
+
+    if (bookingForm) {
+      bookingForm.addEventListener('submit', (event) => {
+        if (!selectedCode || !plateInput?.value.trim()) {
+          event.preventDefault();
+        }
+      });
+    }
+
+    updateEstimate();
+    updateSubmit();
+  })();
+</script>
+</body>
+</html>

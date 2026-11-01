@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Đăng nhập')}"></head>
+<body class="login-page">
+<main class="login-screen">
+  <section class="login-showcase" aria-label="NHAXEHIEUMINH - quản lý bãi xe">
+    <div class="showcase-top">
+      <a class="login-brand" th:href="@{/login}" aria-label="NHAXEHIEUMINH - Quản lý bãi xe">
+        <span class="login-brand-mark"><i class="bi bi-p-square-fill"></i></span>
+        <span>QUẢN LÝ NHÀ XE HIẾU MINH</span>
+      </a>
+      <span class="showcase-caption">NHÀ XE HIỆN ĐẠI VÀ THÔNG MINH</span>
+    </div>
+
+    <div class="showcase-copy">
+      <span class="showcase-kicker"><span></span> VẬN HÀNH BÃI XE</span>
+      <h1>Mọi thứ về<br>bãi xe, trong<br><span>tầm kiểm soát.</span></h1>
+      <p>Theo dõi xe ra vào, quản lý vé tháng và nắm bắt hoạt động bãi xe trong một nơi.</p>
+    </div>
+
+    <svg class="garage-illustration" viewBox="0 0 800 350" role="img" aria-label="Minh họa xe trong bãi đỗ">
+      <defs>
+        <linearGradient id="garage-wall" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#243b59"/>
+          <stop offset="1" stop-color="#14253b"/>
+        </linearGradient>
+        <linearGradient id="garage-floor" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#35485c"/>
+          <stop offset="1" stop-color="#17283c"/>
+        </linearGradient>
+        <linearGradient id="car-paint" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#f8fbff"/>
+          <stop offset="0.55" stop-color="#c9d8e8"/>
+          <stop offset="1" stop-color="#8097b0"/>
+        </linearGradient>
+        <linearGradient id="window-glass" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#91bbd2"/>
+          <stop offset="1" stop-color="#334e68"/>
+        </linearGradient>
+        <filter id="car-shadow" x="-30%" y="-50%" width="160%" height="200%">
+          <feGaussianBlur stdDeviation="9"/>
+        </filter>
+      </defs>
+      <path d="M0 0h800v220H0z" fill="url(#garage-wall)"/>
+      <path d="M0 220h800v130H0z" fill="url(#garage-floor)"/>
+      <path d="M0 219h800" stroke="#72869a" stroke-opacity=".45" stroke-width="2"/>
+      <path d="M80 0v220M720 0v220" stroke="#65798c" stroke-opacity=".36" stroke-width="18"/>
+      <path d="M164 39h132M500 39h132" stroke="#d6e6f0" stroke-opacity=".55" stroke-width="4" stroke-linecap="round"/>
+      <path d="M180 43h98M516 43h98" stroke="#e8f4fb" stroke-opacity=".65" stroke-width="15" stroke-linecap="round" filter="url(#car-shadow)"/>
+      <path d="M44 178h152v5H44zM604 178h152v5H604z" fill="#a8b5c1" opacity=".38"/>
+      <path d="M110 178v-47h82v47M608 178v-47h82v47" fill="#17283c" stroke="#61778c" stroke-opacity=".6" stroke-width="2"/>
+      <path d="M123 144h54v29h-54zM621 144h54v29h-54z" fill="#283f56"/>
+      <path d="M148 274h505" stroke="#d9e1e8" stroke-opacity=".55" stroke-width="3" stroke-dasharray="26 24"/>
+      <path d="M382 242l-42 90M418 242l42 90" stroke="#f4c96b" stroke-opacity=".72" stroke-width="4"/>
+      <ellipse cx="402" cy="273" rx="196" ry="29" fill="#07111d" opacity=".55" filter="url(#car-shadow)"/>
+      <path d="M225 250l24-52c8-17 25-28 44-30l76-7c20-2 38 5 53 18l57 49 46 10c16 4 28 18 28 35v17H211v-18c0-10 5-19 14-22z" fill="url(#car-paint)" stroke="#e7eef5" stroke-width="2"/>
+      <path d="M302 178l-22 3c-12 1-22 9-27 20l-18 39h122v-63zM319 177l52-5c16-1 31 4 43 15l43 37H319z" fill="url(#window-glass)" stroke="#b8c9d8" stroke-width="2"/>
+      <path d="M322 179v43M400 178l-17 44" stroke="#c1d1df" stroke-width="3" opacity=".8"/>
+      <path d="M229 245l-18 8v20h24l15-23zM527 249l24 7v17h-29l-14-20z" fill="#f4d28a"/>
+      <path d="M222 255l-9 5v10h16zM542 258l10 4v9h-17z" fill="#ef8f82"/>
+      <path d="M264 278a31 31 0 1 0 62 0 31 31 0 0 0-62 0zm190 0a31 31 0 1 0 62 0 31 31 0 0 0-62 0z" fill="#101923"/>
+      <path d="M276 278a19 19 0 1 0 38 0 19 19 0 0 0-38 0zm190 0a19 19 0 1 0 38 0 19 19 0 0 0-38 0z" fill="#9aaaba"/>
+      <path d="M285 278a10 10 0 1 0 20 0 10 10 0 0 0-20 0zm190 0a10 10 0 1 0 20 0 10 10 0 0 0-20 0z" fill="#dce5ed"/>
+    </svg>
+
+    <div class="showcase-foot">
+      <span><i class="bi bi-building"></i> Hệ thống quản lý nhà xe HIẾU MINH</span>
+      <span>NHÀ XE HIẾU MINH</span>
+    </div>
+  </section>
+
+  <section class="login-main">
+    <div class="login-card">
+      <div class="login-heading">
+        <span class="login-eyebrow">NHÀ XE HIẾU MINH</span>
+        <h2>Đăng nhập tài khoản</h2>
+        <p>Đăng nhập để quản lý bãi xe hoặc đặt chỗ trực tuyến.</p>
+      </div>
+
+      <div class="alert alert-success login-alert" role="status" th:if="${registered}">
+        <i class="bi bi-check-circle"></i>
+        <span>Tạo tài khoản thành công. Đăng nhập để bắt đầu đặt chỗ.</span>
+      </div>
+      <div class="alert alert-danger login-alert" role="alert" th:if="${param.error}">
+        <i class="bi bi-exclamation-circle"></i>
+        <span>Tên đăng nhập hoặc mật khẩu không chính xác.</span>
+      </div>
+      <div class="alert alert-success login-alert" role="status" th:if="${param.logout}">
+        <i class="bi bi-check-circle"></i>
+        <span>Bạn đã đăng xuất thành công.</span>
+      </div>
+
+      <form th:action="@{/login}" method="post" class="login-form">
+        <div class="field-block">
+          <label for="username" class="form-label">Tên đăng nhập</label>
+          <div class="input-wrap">
+            <i class="bi bi-person" aria-hidden="true"></i>
+            <input id="username" name="username" class="form-control" type="text"
+                   placeholder="Nhập tên đăng nhập" autocomplete="username" required autofocus>
+          </div>
+        </div>
+
+        <div class="field-block">
+          <label for="password" class="form-label">Mật khẩu</label>
+          <div class="input-wrap">
+            <i class="bi bi-lock" aria-hidden="true"></i>
+            <input id="password" name="password" class="form-control" type="password"
+                   placeholder="Nhập mật khẩu" autocomplete="current-password" required>
+          </div>
+        </div>
+
+        <button class="btn btn-primary w-100 btn-modern" type="submit">
+          <span>Đăng nhập</span>
+          <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </button>
+      </form>
+      <p class="mt-4 text-center">Chưa có tài khoản khách?
+        <a th:href="@{/register}" class="fw-semibold">Đăng ký đặt chỗ</a>
+      </p>
+
+      <p class="login-footnote"><i class="bi bi-info-circle"></i> Khách hàng có thể tự đăng ký tài khoản để đặt chỗ.</p>
+    </div>
+    <div class="login-support">Cần hỗ trợ? Liên hệ quản trị viên hệ thống.</div>
+  </section>
+</main>
+</body>
+</html>

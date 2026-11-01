@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Tài khoản')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('users')}"></div>
+<div class="container">
+  <div th:replace="~{fragments :: alerts}"></div>
+  <div class="card mb-4"><div class="card-body">
+    <h5>Tạo tài khoản</h5>
+    <form th:action="@{/admin/users}" method="post" class="row g-2">
+      <div class="col-md-3"><input name="username" class="form-control" placeholder="Tên đăng nhập" required></div>
+      <div class="col-md-3"><input name="password" type="password" class="form-control" placeholder="Mật khẩu (≥ 6 ký tự)" required minlength="6"></div>
+      <div class="col-md-3"><input name="fullName" class="form-control" placeholder="Họ tên"></div>
+      <div class="col-md-2"><select name="role" class="form-select">
+        <option value="STAFF">Nhân viên</option><option value="ADMIN">Quản trị</option></select></div>
+      <div class="col-md-1"><button class="btn btn-primary w-100">Tạo</button></div>
+    </form>
+  </div></div>
+  <div class="table-responsive"><table class="table table-striped align-middle">
+    <thead><tr><th>Tên đăng nhập</th><th>Họ tên</th><th>Số điện thoại</th><th>Quyền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+    <tbody>
+      <tr th:each="u : ${users.content}">
+        <td th:text="${u.username}"></td>
+        <td th:text="${u.fullName}"></td>
+        <td th:text="${u.phone != null and !u.phone.isBlank()} ? ${u.phone} : 'Chưa có'">Chưa có</td>
+        <td><span class="badge" th:classappend="${u.role == 'ADMIN'} ? 'text-bg-danger' : 'text-bg-secondary'" th:text="${u.role}"></span></td>
+        <td th:text="${u.enabled} ? 'Hoạt động' : 'Đã khóa'"></td>
+        <td>
+          <div class="d-flex flex-wrap gap-2">
+            <form th:action="@{/admin/users/{id}/toggle(id=${u.id})}" method="post">
+              <button class="btn btn-sm btn-outline-secondary" th:text="${u.enabled} ? 'Khóa' : 'Mở khóa'"></button>
+            </form>
+            <details class="account-action">
+              <summary class="btn btn-sm btn-outline-primary">Sửa tên</summary>
+              <form class="account-action-form mt-2"
+                    th:action="@{/admin/users/{id}/rename(id=${u.id})}" method="post">
+                <div class="row g-2">
+                  <div class="col-sm-5">
+                    <input name="username" class="form-control form-control-sm" required maxlength="50"
+                           placeholder="Tên đăng nhập" th:value="${u.username}">
+                  </div>
+                  <div class="col-sm-5">
+                    <input name="fullName" class="form-control form-control-sm" maxlength="100"
+                           placeholder="Họ tên" th:value="${u.fullName}">
+                  </div>
+                  <div class="col-sm-2">
+                    <button class="btn btn-sm btn-primary w-100" type="submit">Lưu</button>
+                  </div>
+                </div>
+              </form>
+            </details>
+            <details class="account-phone">
+              <summary class="btn btn-sm btn-outline-primary">SĐT</summary>
+              <form class="account-phone-form mt-2" th:action="@{/admin/users/{id}/phone(id=${u.id})}" method="post">
+                <div class="input-group input-group-sm">
+                  <input name="phone" class="form-control" maxlength="20" placeholder="Nhập số điện thoại" th:value="${u.phone}">
+                  <button class="btn btn-primary" type="submit">Lưu</button>
+                </div>
+                <button class="btn btn-link btn-sm p-0 mt-2 text-danger" type="submit" name="deletePhone" value="true">Xóa số điện thoại</button>
+              </form>
+            </details>
+            <details class="password-change">
+              <summary class="btn btn-sm btn-outline-primary">Đổi mật khẩu</summary>
+              <form class="password-change-form mt-2"
+                    th:action="@{/admin/users/{id}/password(id=${u.id})}" method="post">
+                <div class="row g-2">
+                  <div class="col-sm-5">
+                    <input name="newPassword" type="password" class="form-control form-control-sm"
+                           placeholder="Mật khẩu mới (ít nhất 6 ký tự)" minlength="6" required
+                           autocomplete="new-password">
+                  </div>
+                  <div class="col-sm-5">
+                    <input name="confirmPassword" type="password" class="form-control form-control-sm"
+                           placeholder="Nhập lại mật khẩu mới" minlength="6" required
+                           autocomplete="new-password">
+                  </div>
+                  <div class="col-sm-2">
+                    <button class="btn btn-sm btn-primary w-100" type="submit">Lưu</button>
+                  </div>
+                </div>
+              </form>
+            </details>
+            <form th:action="@{/admin/users/{id}/delete(id=${u.id})}" method="post"
+                  onsubmit="return confirm('Xóa tài khoản này? Lịch sử xe vào/ra sẽ được giữ lại.')">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Xóa tài khoản</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table></div>
+  <div th:replace="~{fragments :: pagination(${users}, ${paginationUrlPrefix})}"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Lịch sử')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('history')}"></div>
+<div class="container">
+  <h5>Lịch sử xe vào / ra</h5>
+  <p class="text-muted">Theo dõi nhân viên ghi nhận xe vào và nhân viên trực tiếp cho xe ra.</p>
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <span id="history-sync-status" class="small text-muted" role="status" aria-live="polite">
+      <i class="bi bi-arrow-repeat"></i> Tự động cập nhật mỗi 15 giây
+    </span>
+    <button id="history-refresh" class="btn btn-sm btn-outline-primary" type="button">
+      <i class="bi bi-arrow-clockwise"></i> Cập nhật ngay
+    </button>
+  </div>
+  <form th:action="@{/admin/parking/history}" method="get" class="row g-2 mb-3">
+    <div class="col-md-3"><input name="plate" th:value="${plate}" class="form-control" placeholder="Biển số"></div>
+    <div class="col-md-2"><select name="type" class="form-select">
+      <option value="">Tất cả loại</option>
+      <option th:each="t : ${types}" th:value="${t}" th:text="${t.label}" th:selected="${type == t}"></option></select></div>
+    <div class="col-md-2"><label class="form-label small mb-0">Từ ngày xe vào/ra</label><input type="date" name="from" th:value="${from}" class="form-control"></div>
+    <div class="col-md-2"><label class="form-label small mb-0">Đến ngày xe vào/ra</label><input type="date" name="to" th:value="${to}" class="form-control"></div>
+    <div class="col-md-2" th:if="${isAdmin}">
+      <label for="checkoutEmployee" class="form-label small mb-0">Nhân viên cho xe ra</label>
+      <select id="checkoutEmployee" name="checkoutEmployee" class="form-select">
+        <option value="">Tất cả nhân viên ra xe</option>
+        <option th:each="staff : ${employees}" th:value="${staff.username}" th:text="${staff.username}"
+                th:selected="${checkoutEmployee == staff.username}"></option>
+      </select>
+    </div>
+    <div th:class="${isAdmin} ? 'col-md-1' : 'col-md-3'">
+      <button class="btn btn-primary w-100">Tìm kiếm</button>
+    </div>
+  </form>
+  <section id="monthly-ticket-info" class="alert alert-info py-2"
+           th:if="${!#lists.isEmpty(monthlyTickets)}">
+    <strong><i class="bi bi-ticket-perforated"></i> Có vé tháng khớp với biển số tìm kiếm</strong>
+    <p class="small mb-2">Vé tháng là đăng ký quyền gửi xe, không tự tạo lượt check-in/check-out; chỉ các lượt gửi xe thực tế mới xuất hiện trong bảng lịch sử bên dưới.</p>
+    <div class="table-responsive">
+      <table class="table table-sm table-borderless align-middle mb-0">
+        <thead><tr><th>Biển số</th><th>Chủ xe</th><th>Loại xe</th><th>Hiệu lực</th><th>Trạng thái vé</th></tr></thead>
+        <tbody>
+          <tr th:each="ticket : ${monthlyTickets}">
+            <td th:text="${ticket.licensePlate}"></td>
+            <td th:text="${ticket.ownerName}"></td>
+            <td th:text="${ticket.vehicleType.label}"></td>
+            <td th:text="${#temporals.format(ticket.startDate,'dd/MM/yyyy')} + ' - ' + ${#temporals.format(ticket.endDate,'dd/MM/yyyy')}"></td>
+            <td>
+              <span class="badge text-bg-danger" th:if="${ticket.cancelledAt != null}">Đã hủy</span>
+              <span class="badge text-bg-warning" th:if="${ticket.cancelledAt == null and ticket.renewalCancelled}">Đã ngừng gia hạn</span>
+              <span class="badge text-bg-success" th:if="${ticket.cancelledAt == null and !ticket.renewalCancelled and !ticket.endDate.isBefore(today)}">Còn hạn</span>
+              <span class="badge text-bg-secondary" th:if="${ticket.cancelledAt == null and !ticket.renewalCancelled and ticket.endDate.isBefore(today)}">Hết hạn</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <div class="table-responsive"><table id="history-table" class="table table-striped align-middle">
+    <thead><tr>
+      <th>Vị trí</th><th>Biển số</th><th>Loại</th><th>Giờ vào</th><th>Giờ ra</th><th>Phí (đ)</th><th>Thanh toán</th>
+      <th th:if="${isAdmin}">Nhân viên vào</th><th th:if="${isAdmin}">Nhân viên ra</th>
+    </tr></thead>
+    <tbody>
+      <tr th:each="r : ${page.content}">
+        <td th:text="${r.slotCode != null} ? ${r.slotCode} : '—'"></td>
+        <td th:text="${r.licensePlate}"></td>
+        <td th:text="${r.vehicleType.label}"></td>
+        <td th:text="${#temporals.format(r.checkIn,'dd/MM/yyyy HH:mm')}"></td>
+        <td th:text="${r.checkOut != null} ? ${#temporals.format(r.checkOut,'dd/MM/yyyy HH:mm')} : 'Đang trong bãi'"></td>
+        <td><span th:text="${#numbers.formatInteger(r.fee,0,'POINT')}"></span>
+            <span class="badge text-bg-info" th:if="${r.monthlyTicket}">Vé tháng</span></td>
+        <td th:text="${r.paymentMethod != null} ? ${r.paymentMethod.label} : '—'"></td>
+        <td th:if="${isAdmin}" th:text="${r.createdBy != null} ? ${r.createdBy} : 'Chưa ghi nhận'"></td>
+        <td th:if="${isAdmin}" th:text="${r.checkOut == null ? '—' : (r.checkedOutBy != null ? r.checkedOutBy : 'Chưa ghi nhận')}"></td>
+      </tr>
+      <tr th:if="${page.empty}">
+        <td th:colspan="${isAdmin ? 9 : 7}" class="text-center text-muted"
+            th:text="${!#lists.isEmpty(monthlyTickets)} ? 'Có vé tháng nhưng chưa có lượt gửi xe phù hợp với điều kiện tìm kiếm' : 'Không có dữ liệu'">
+          Không có dữ liệu
+        </td>
+      </tr>
+    </tbody>
+  </table></div>
+  <div id="history-pagination" class="d-flex justify-content-between align-items-center">
+    <a class="btn btn-outline-secondary btn-sm"
+       th:if="${!page.first}"
+       th:href="@{/admin/parking/history(plate=${plate},type=${type},checkoutEmployee=${checkoutEmployee},from=${from},to=${to},page=${page.number - 1})}">« Trước</a>
+    <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true" th:if="${page.first}">« Trước</span>
+    <span th:text="'Trang ' + ${page.number + 1} + ' / ' + ${page.totalPages > 0 ? page.totalPages : 1}"></span>
+    <a class="btn btn-outline-secondary btn-sm"
+       th:if="${!page.last}"
+       th:href="@{/admin/parking/history(plate=${plate},type=${type},checkoutEmployee=${checkoutEmployee},from=${from},to=${to},page=${page.number + 1})}">Sau »</a>
+    <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true" th:if="${page.last}">Sau »</span>
+  </div>
+</div>
+<script>
+  (() => {
+    const status = document.getElementById('history-sync-status');
+    const refreshButton = document.getElementById('history-refresh');
+    const historyTable = document.getElementById('history-table');
+    let pagination = document.getElementById('history-pagination');
+    let refreshing = false;
+
+    const refreshHistory = async () => {
+      if (refreshing || document.hidden) return;
+      refreshing = true;
+      refreshButton.disabled = true;
+      status.innerHTML = '<i class="bi bi-arrow-repeat"></i> Đang đồng bộ lịch sử...';
+      try {
+        const response = await fetch(window.location.href, {
+          cache: 'no-store',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (!response.ok) {
+          throw new Error(`Làm mới lịch sử thất bại: HTTP ${response.status}`);
+        }
+        const html = await response.text();
+        const updatedPage = new DOMParser().parseFromString(html, 'text/html');
+        const updatedTable = updatedPage.getElementById('history-table');
+        const updatedPagination = updatedPage.getElementById('history-pagination');
+        const updatedTicketInfo = updatedPage.getElementById('monthly-ticket-info');
+        const ticketInfo = document.getElementById('monthly-ticket-info');
+        if (!updatedTable || !updatedPagination) {
+          throw new Error('Phản hồi không chứa bảng lịch sử cần đồng bộ');
+        }
+
+        historyTable.tBodies[0].replaceWith(updatedTable.tBodies[0]);
+        pagination.replaceWith(updatedPagination);
+        pagination = updatedPagination;
+        if (ticketInfo && updatedTicketInfo) {
+          ticketInfo.replaceWith(updatedTicketInfo);
+        } else if (ticketInfo) {
+          ticketInfo.remove();
+        } else if (updatedTicketInfo) {
+          document.querySelector('form[action$="/admin/parking/history"]').after(updatedTicketInfo);
+        }
+        status.innerHTML = `<i class="bi bi-check-circle"></i> Đã đồng bộ lúc ${new Date().toLocaleTimeString('vi-VN')}`;
+        status.classList.remove('text-danger');
+      } catch (error) {
+        console.error(error);
+        status.innerHTML = '<i class="bi bi-exclamation-circle"></i> Chưa đồng bộ được; hãy thử cập nhật lại';
+        status.classList.add('text-danger');
+      } finally {
+        refreshing = false;
+        refreshButton.disabled = false;
+      }
+    };
+
+    refreshButton.addEventListener('click', refreshHistory);
+    window.setInterval(refreshHistory, 15000);
+  })();
+</script>
+</body>
+</html>

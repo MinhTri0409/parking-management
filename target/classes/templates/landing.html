@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments :: head('Đặt chỗ gửi xe trực tuyến')}"></head>
+<body class="landing-page">
+<header class="landing-header">
+  <nav class="landing-nav" aria-label="Điều hướng chính">
+    <a class="landing-brand" th:href="@{/}" aria-label="Nhà xe Hiếu Minh - Trang chủ">
+      <span class="brand-mark"><i class="bi bi-p-square-fill"></i></span>
+      <span>NHÀ XE <strong>HIẾU MINH</strong></span>
+    </a>
+    <div class="landing-nav-links">
+      <a href="#gioi-thieu">Giới thiệu</a>
+      <a href="#dich-vu">Dịch vụ</a>
+      <a href="#quy-trinh">Cách đặt chỗ</a>
+      <a href="#bang-gia">Bảng giá</a>
+      <a href="#lien-he">Liên hệ</a>
+    </div>
+    <div class="landing-nav-actions">
+      <a class="landing-login" sec:authorize="isAnonymous()" th:href="@{/login}">Đăng nhập</a>
+      <a class="landing-login" sec:authorize="hasRole('ADMIN')" th:href="@{/admin}">Quản lý</a>
+      <a class="landing-login" sec:authorize="hasRole('STAFF')" th:href="@{/admin}">Điều hành</a>
+      <div sec:authorize="hasRole('CUSTOMER')"
+           th:replace="~{fragments :: accountMenu('landing-login landing-account-trigger', 'Tài khoản', 'dashboard')}"></div>
+      <form class="landing-logout-form" th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <button type="submit" class="landing-login landing-logout-button">Đăng xuất</button>
+      </form>
+      <!-- nút đặt chỗ ngay  -->
+      <!-- <a class="landing-cta landing-cta-small" th:href="@{/reservations}">
+        <span sec:authorize="isAnonymous()">Đặt chỗ</span>
+        <span sec:authorize="isAuthenticated()">Đặt chỗ ngay</span>
+        <i class="bi bi-arrow-up-right"></i>
+      </a> -->
+    </div>
+  </nav>
+</header>
+
+<main>
+  <section class="landing-hero">
+    <div class="landing-hero-glow landing-glow-one"></div>
+    <div class="landing-hero-glow landing-glow-two"></div>
+    <div class="landing-hero-inner">
+      <div class="landing-hero-copy">
+        <span class="landing-eyebrow"><i class="bi bi-record-circle"></i> TRẢI NGHIỆM GỬI XE CHỦ ĐỘNG</span>
+        <h1>Đến nơi an tâm.<br><span>Đã có chỗ đợi bạn.</span></h1>
+        <p>Chọn loại xe, giờ gửi và vị trí đỗ trước khi khởi hành. Theo dõi xác nhận đặt chỗ ngay trên tài khoản của bạn.</p>
+        <div class="landing-hero-actions">
+          <a class="landing-cta" th:href="@{/reservations}">Đặt chỗ trực tuyến <i class="bi bi-arrow-right"></i></a>
+          <a class="landing-text-link" href="#quy-trinh"><i class="bi bi-play-circle"></i> Tìm hiểu cách đặt</a>
+        </div>
+        <div class="landing-trust-row">
+          <span><i class="bi bi-check-circle-fill"></i> Chọn chỗ trước</span>
+          <span><i class="bi bi-check-circle-fill"></i> Giá rõ ràng</span>
+          <span><i class="bi bi-check-circle-fill"></i> Xác nhận minh bạch</span>
+        </div>
+      </div>
+
+      <div class="landing-hero-visual" aria-label="Minh họa sơ đồ vị trí đỗ xe">
+        <div class="hero-visual-topline"><span><i></i> BÃI XE HIẾU MINH</span><span><i class="bi bi-geo-alt"></i> Khu vực đỗ xe</span></div>
+        <div class="hero-lot">
+          <div class="hero-lot-label"><i class="bi bi-arrow-down-up"></i><span>LỐI DI CHUYỂN</span><i class="bi bi-arrow-down-up"></i></div>
+          <div class="hero-lot-grid">
+            <div class="hero-parking-slot slot-taken"><i class="bi bi-car-front-fill"></i><span>A-01</span></div>
+            <div class="hero-parking-slot"><i class="bi bi-car-front-fill"></i><span>A-02</span><b>TRỐNG</b></div>
+            <div class="hero-parking-slot"><i class="bi bi-car-front-fill"></i><span>A-03</span><b>TRỐNG</b></div>
+            <div class="hero-parking-slot slot-taken"><i class="bi bi-car-front-fill"></i><span>A-04</span></div>
+            <div class="hero-parking-slot"><i class="bi bi-car-front-fill"></i><span>A-05</span><b>TRỐNG</b></div>
+            <div class="hero-parking-slot"><i class="bi bi-car-front-fill"></i><span>A-06</span><b>TRỐNG</b></div>
+            <div class="hero-parking-slot"><i class="bi bi-car-front-fill"></i><span>A-07</span><b>TRỐNG</b></div>
+            <div class="hero-parking-slot slot-selected"><i class="bi bi-car-front-fill"></i><span>A-08</span><b><i class="bi bi-check2"></i> BẠN CHỌN</b></div>
+          </div>
+          <div class="hero-lot-road"><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="hero-gate"><i class="bi bi-signpost-2-fill"></i> CỔNG VÀO</div>
+        </div>
+        <div class="hero-booking-card">
+          <span class="hero-booking-icon"><i class="bi bi-calendar2-check"></i></span>
+          <span><strong>Vị trí A-08 sẵn sàng</strong><small>Chọn thời gian để kiểm tra chỗ trống</small></span>
+          <i class="bi bi-arrow-up-right"></i>
+        </div>
+        <div class="hero-visual-decoration decoration-one"><i class="bi bi-shield-check"></i></div>
+        <div class="hero-visual-decoration decoration-two"><i class="bi bi-lightning-charge-fill"></i></div>
+      </div>
+    </div>
+    <div class="landing-hero-bottom"><span>ĐẶT CHỖ DỄ DÀNG</span><span></span><span>ĐỖ XE AN TÂM</span></div>
+  </section>
+
+  <section class="landing-stats" aria-label="Thông tin bãi xe">
+    <div class="landing-stat-intro"><span class="landing-eyebrow">SẴN SÀNG ĐÓN BẠN</span><strong>Chủ động chỗ đỗ,<br>trọn vẹn hành trình.</strong></div>
+    <div class="landing-stat"><span class="stat-icon"><i class="bi bi-p-square"></i></span><strong th:text="${totalCapacity}">0</strong><small>Vị trí trong hệ thống</small></div>
+    <div class="landing-stat"><span class="stat-icon stat-icon-green"><i class="bi bi-check2-circle"></i></span><strong th:text="${availableSpaces}">0</strong><small>Vị trí trống trong giờ tới</small></div>
+    <div class="landing-stat"><span class="stat-icon stat-icon-purple"><i class="bi bi-clock-history"></i></span><strong>24/7</strong><small>Tra cứu và đặt chỗ</small></div>
+  </section>
+
+  <section id="gioi-thieu" class="landing-section landing-about">
+    <div class="landing-about-copy">
+      <span class="landing-eyebrow">GIỚI THIỆU NHÀ XE</span>
+      <h2>Nhà xe Hiếu Minh<br><span>đồng hành trên mọi hành trình.</span></h2>
+      <p>Chúng tôi cung cấp dịch vụ gửi xe và đặt chỗ trực tuyến, giúp khách hàng chủ động chọn loại xe, khung giờ và vị trí đỗ trước khi đến.</p>
+      <p>Thông tin vị trí và chi phí được trình bày rõ ràng để bạn dễ dàng lên kế hoạch. Khách hàng có thể theo dõi các đơn đặt chỗ ngay trên tài khoản cá nhân.</p>
+      <a class="landing-about-link" th:href="@{/reservations}">Khám phá đặt chỗ <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="landing-about-highlights" aria-label="Ưu điểm dịch vụ">
+      <article><span><i class="bi bi-pin-map"></i></span><div><strong>Chủ động vị trí</strong><p>Chọn chỗ đỗ phù hợp trước khi khởi hành.</p></div></article>
+      <article><span><i class="bi bi-receipt"></i></span><div><strong>Chi phí minh bạch</strong><p>Xem giá dự kiến theo loại xe và thời lượng gửi.</p></div></article>
+      <article><span><i class="bi bi-person-check"></i></span><div><strong>Theo dõi thuận tiện</strong><p>Quản lý trạng thái đặt chỗ bằng tài khoản của bạn.</p></div></article>
+    </div>
+  </section>
+
+  <section class="landing-section about-principles" aria-label="Tầm nhìn, sứ mệnh và giá trị cốt lõi">
+    <article class="about-principle">
+      <span class="principle-icon principle-icon-vision"><i class="bi bi-rocket-takeoff"></i></span>
+      <h3>Tầm nhìn</h3>
+      <p>Trở thành đơn vị cung cấp hệ thống giám sát và quản lý bãi đỗ xe hiện đại, an toàn, được khách hàng tin tưởng lựa chọn.</p>
+    </article>
+    <article class="about-principle">
+      <span class="principle-icon principle-icon-mission"><i class="bi bi-bullseye"></i></span>
+      <h3>Sứ mệnh</h3>
+      <p>Mang đến giải pháp gửi xe thông minh, dễ sử dụng, giúp khách hàng chủ động tìm chỗ và giúp nhà xe vận hành hiệu quả hơn.</p>
+    </article>
+    <article class="about-principle">
+      <span class="principle-icon principle-icon-values"><i class="bi bi-gem"></i></span>
+      <h3>Giá trị cốt lõi</h3>
+      <p><strong>Giải pháp:</strong> Hỗ trợ quản lý vị trí và đặt chỗ rõ ràng.</p>
+      <p><strong>Đồng hành:</strong> Hỗ trợ khách hàng trong quá trình sử dụng.</p>
+      <p><strong>Linh hoạt:</strong> Cải tiến dịch vụ theo nhu cầu thực tế.</p>
+    </article>
+  </section>
+
+  <section class="landing-section about-faqs" aria-label="Vấn đề khách hàng và giải pháp">
+    <div class="about-faq-group">
+      <h2>Vấn đề của khách hàng</h2>
+      <div class="about-accordion">
+        <details>
+          <summary>Chưa có hệ thống giữ xe thông minh</summary>
+          <p>Khách hàng khó biết trước vị trí còn trống, còn nhà xe phải kiểm tra và sắp xếp chỗ theo cách thủ công.</p>
+        </details>
+        <details>
+          <summary>Hệ thống xuống cấp, lạc hậu</summary>
+          <p>Quy trình ghi nhận rời rạc có thể làm mất thời gian tra cứu thông tin và theo dõi lượt xe.</p>
+        </details>
+        <details>
+          <summary>Hệ thống chưa đáp ứng đủ nhu cầu</summary>
+          <p>Thiếu thông tin về khung giờ, vị trí và chi phí khiến khách hàng khó chủ động kế hoạch gửi xe.</p>
+        </details>
+      </div>
+    </div>
+
+    <div class="about-faq-group">
+      <h2>Giải pháp của Hiếu Minh</h2>
+      <div class="about-accordion">
+        <details>
+          <summary>Cung cấp hệ thống quản lý rõ ràng</summary>
+          <p>Theo dõi sức chứa, vị trí đỗ và trạng thái đặt chỗ tập trung trên một giao diện.</p>
+        </details>
+        <details>
+          <summary>Hỗ trợ theo dõi và cải thiện vận hành</summary>
+          <p>Thông tin lượt xe và lịch sử được tổ chức dễ tra cứu, hỗ trợ nhân viên xử lý công việc nhất quán.</p>
+        </details>
+        <details>
+          <summary>Thiết kế dịch vụ linh hoạt theo nhu cầu</summary>
+          <p>Khách hàng chọn loại xe, thời gian và vị trí phù hợp; nhà xe có thể cập nhật bảng giá và sức chứa.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section about-customers" aria-labelledby="about-customers-title">
+    <div class="about-customers-heading">
+      <span class="landing-eyebrow">ĐỒNG HÀNH CÙNG CHÚNG TÔI</span>
+      <h2 id="about-customers-title">Khách hàng của Hiếu Minh</h2>
+      <p>Trân trọng sự tin tưởng và đồng hành của các khách hàng, đối tác.</p>
+    </div>
+    <div class="about-customer-logos" id="about-customer-logos" aria-live="polite">
+      <div class="about-customer-logo" data-customer-logo="hoa-sen">
+        <img th:src="@{/images/hoa-sen-group.png}" alt="Logo Hoa Sen Group" loading="lazy">
+      </div>
+      <div class="about-customer-logo about-customer-logo-featured" data-customer-logo="hitc">
+        <img th:src="@{/images/hitc.png}" alt="Logo Cao đẳng Công thương Thành phố Hồ Chí Minh" loading="lazy">
+      </div>
+      <div class="about-customer-logo" data-customer-logo="real-madrid">
+        <img th:src="@{/images/real-madrid.png}" alt="Logo Real Madrid" loading="lazy">
+      </div>
+    </div>
+    <div class="about-customer-dots" role="group" aria-label="Chọn logo khách hàng ở giữa">
+      <button type="button" aria-label="Đưa logo Hoa Sen Group vào giữa" aria-pressed="false"
+              data-center-logo="hoa-sen"></button>
+      <button type="button" aria-label="Đưa logo HITC vào giữa" aria-pressed="true"
+              data-center-logo="hitc" class="active"></button>
+      <button type="button" aria-label="Đưa logo Real Madrid vào giữa" aria-pressed="false"
+              data-center-logo="real-madrid"></button>
+    </div>
+  </section>
+
+  <section class="landing-section about-team" aria-labelledby="about-team-title">
+    <div class="about-team-heading">
+      <span class="landing-eyebrow">ĐỘI NGŨ NHÀ XE HIẾU MINH</span>
+      <h2 id="about-team-title">Đội ngũ chuyên gia</h2>
+      <p>Những thành viên đồng hành phát triển và vận hành dịch vụ.</p>
+    </div>
+    <div class="about-team-grid">
+      <article class="about-team-card">
+        <div class="about-team-card-top">
+          <div class="about-team-member">
+            <img class="about-team-avatar" th:src="@{/images/team-nguyen-duy.png}"
+                 alt="Ảnh Nguyễn Duy" loading="lazy">
+            <div>
+              <h3>NGUYỄN DUY</h3>
+              <span class="about-team-role">Tư vấn triển khai dự án</span>
+            </div>
+          </div>
+        </div>
+        <div class="about-team-description">-1000 năm kinh nghiệm dự án lớn/nhỏ tại Việt Nam</div>
+      </article>
+      <article class="about-team-card">
+        <div class="about-team-card-top">
+          <div class="about-team-member">
+            <img class="about-team-avatar about-team-avatar-blue" th:src="@{/images/team-tran-tri-dung.png}"
+                 alt="Ảnh Trần Trí Dũng" loading="lazy">
+            <div>
+              <h3>TRẦN TRÍ DŨNG</h3>
+              <span class="about-team-role">Phần mềm</span>
+            </div>
+          </div>
+        </div>
+        <div class="about-team-description">01 năm kinh nghiệm</div>
+      </article>
+      <article class="about-team-card">
+        <div class="about-team-card-top">
+          <div class="about-team-member">
+            <img class="about-team-avatar about-team-avatar-gold" th:src="@{/images/team-nguyen-luong-kiet.png}"
+                 alt="Ảnh Nguyễn Lương Kiệt" loading="lazy">
+            <div>
+              <h3>NGUYỄN LƯƠNG KIỆT</h3>
+              <span class="about-team-role">Kiểm tra - Đánh giá hệ thống</span>
+            </div>
+          </div>
+        </div>
+        <div class="about-team-description">-100tr năm kinh nghiệm</div>
+      </article>
+    </div>
+  </section>
+
+  <section id="dich-vu" class="landing-section landing-services">
+    <div class="landing-section-heading">
+      <div><span class="landing-eyebrow">MỘT ĐIỂM DỪNG, NHIỀU TIỆN ÍCH</span><h2>Gửi xe theo cách<br><span>bạn mong muốn.</span></h2></div>
+      <p>Từ lúc chọn vị trí đến khi nhận xe, mọi thông tin đặt chỗ được tập trung rõ ràng trong tài khoản của bạn.</p>
+    </div>
+    <div class="landing-service-grid">
+      <article class="landing-service-card service-card-featured">
+        <span class="service-number">01 / ĐẶT TRƯỚC</span>
+        <span class="service-icon"><i class="bi bi-pin-map-fill"></i></span>
+        <h3>Chọn vị trí theo thời gian</h3>
+        <p>Xem chỗ còn trống theo khung giờ dự kiến, chọn vị trí phù hợp và hạn chế mất thời gian tìm chỗ khi đến nơi.</p>
+        <a th:href="@{/reservations}">Chọn chỗ đỗ <i class="bi bi-arrow-up-right"></i></a>
+        <div class="service-card-orbit"></div>
+      </article>
+      <article class="landing-service-card">
+        <span class="service-number">02 / MINH BẠCH</span>
+        <span class="service-icon service-icon-blue"><i class="bi bi-receipt-cutoff"></i></span>
+        <h3>Chi phí hiển thị trước</h3>
+        <p>Xem giá theo loại xe và thời lượng trước khi gửi yêu cầu đặt chỗ. Giá được cập nhật từ bảng giá của nhà xe.</p>
+        <a href="#bang-gia">Xem bảng giá <i class="bi bi-arrow-up-right"></i></a>
+      </article>
+      <article class="landing-service-card">
+        <span class="service-number">03 / AN TÂM</span>
+        <span class="service-icon service-icon-gold"><i class="bi bi-shield-lock-fill"></i></span>
+        <h3>Xác nhận rõ ràng</h3>
+        <p>Theo dõi trạng thái đơn. Thanh toán chuyển khoản được nhân viên kiểm tra và xác nhận trước khi chỗ được giữ.</p>
+        <a th:href="@{/register}">Tạo tài khoản khách <i class="bi bi-arrow-up-right"></i></a>
+      </article>
+    </div>
+  </section>
+
+  <section id="quy-trinh" class="landing-process">
+    <div class="landing-process-copy">
+      <span class="landing-eyebrow">BẮT ĐẦU TRONG VÀI BƯỚC</span>
+      <h2>Đặt chỗ gọn nhẹ.<br><span>Sẵn sàng lên đường.</span></h2>
+      <p>Không cần gọi hỏi chỗ. Chọn khung giờ, xem giá và gửi yêu cầu ngay trên website.</p>
+      <a class="landing-cta" th:href="@{/reservations}">Bắt đầu đặt chỗ <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="landing-process-steps">
+      <article><span>01</span><div><i class="bi bi-person-plus"></i><h3>Tạo tài khoản khách</h3><p>Đăng ký nhanh để lưu và theo dõi đơn đặt chỗ của bạn.</p></div></article>
+      <article><span>02</span><div><i class="bi bi-calendar2-range"></i><h3>Chọn xe, giờ và vị trí</h3><p>Chỗ trống cùng chi phí dự kiến được hiển thị theo lựa chọn.</p></div></article>
+      <article><span>03</span><div><i class="bi bi-qr-code-scan"></i><h3>Thanh toán, nhận xác nhận</h3><p>Chuyển khoản bằng QR; nhân viên kiểm tra giao dịch và xác nhận đơn.</p></div></article>
+    </div>
+  </section>
+
+  <section id="bang-gia" class="landing-section landing-pricing">
+    <div class="landing-section-heading">
+      <div><span class="landing-eyebrow">GIÁ GỬI XE THEO GIỜ</span><h2>Biết trước chi phí.<br><span>Yên tâm chọn chỗ.</span></h2></div>
+      <p>Đơn giá tham khảo được đồng bộ từ bảng giá nhà xe. Tổng tiền chính xác được tính theo khung giờ bạn chọn.</p>
+    </div>
+    <div class="landing-pricing-grid">
+      <article class="landing-price-card" th:each="price : ${prices}">
+        <span class="price-vehicle-icon">
+          <i th:class="${price.vehicleType.name() == 'CAR'} ? 'bi bi-car-front-fill' : (${price.vehicleType.name() == 'MOTORBIKE'} ? 'bi bi-scooter' : 'bi bi-bicycle')"></i>
+        </span>
+        <span class="price-vehicle-label" th:text="${price.vehicleType.label}">Ô tô</span>
+        <strong class="price-amount"><span th:text="${#numbers.formatInteger(price.reservationHourlyPrice, 0, 'POINT')}">25.000</span><small> đ / giờ</small></strong>
+        <span class="price-capacity"><i class="bi bi-p-square"></i> <span th:text="${price.capacity}">50</span> vị trí</span>
+        <a th:href="@{/reservations(type=${price.vehicleType})}">Đặt loại xe này <i class="bi bi-arrow-right"></i></a>
+      </article>
+    </div>
+    <p class="landing-pricing-note"><i class="bi bi-info-circle"></i> Thời lượng lẻ được làm tròn lên giờ tiếp theo. Đơn đặt giữ chỗ sau khi nhân viên xác nhận thanh toán.</p>
+  </section>
+
+  <section class="landing-cta-band">
+    <div><span class="landing-eyebrow">HÀNH TRÌNH CỦA BẠN, BẮT ĐẦU TỪ MỘT CHỖ ĐỖ</span><h2>Đặt trước ngay hôm nay.</h2><p>Chọn vị trí phù hợp và để nhà xe sẵn sàng đón bạn.</p></div>
+    <a class="landing-cta landing-cta-light" th:href="@{/reservations}">Đặt chỗ ngay <i class="bi bi-arrow-up-right"></i></a>
+  </section>
+
+  <section id="lien-he" class="landing-section landing-contact">
+    <div class="landing-section-heading">
+      <div><span class="landing-eyebrow">NHÀ XE HIẾU MINH</span><h2>Liên hệ<br><span>với chúng tôi.</span></h2></div>
+      <p>Cần hỗ trợ về dịch vụ hoặc đặt chỗ? Hãy liên hệ với nhà xe qua các thông tin dưới đây.</p>
+    </div>
+    <div class="landing-contact-grid">
+      <a class="landing-contact-card" href="tel:0862282415">
+        <span class="contact-icon"><i class="bi bi-telephone"></i></span>
+        <span class="contact-label">Điện thoại</span>
+        <strong>0862 282 415</strong>
+        <span class="contact-action">Gọi cho chúng tôi <i class="bi bi-arrow-up-right"></i></span>
+      </a>
+      <a class="landing-contact-card" href="mailto:trantridung10122006@gmail.com">
+        <span class="contact-icon contact-icon-blue"><i class="bi bi-envelope"></i></span>
+        <span class="contact-label">Email</span>
+        <strong>trantridung10122006@gmail.com</strong>
+        <span class="contact-action">Gửi email <i class="bi bi-arrow-up-right"></i></span>
+      </a>
+      <a class="landing-contact-card" href="https://www.google.com/maps/search/?api=1&amp;query=100%2F3%20Quang%20Trung%2C%20T%C4%83ng%20Nh%C6%A1n%20Ph%C3%BA%2C%20TPHCM" target="_blank" rel="noopener noreferrer">
+        <span class="contact-icon contact-icon-gold"><i class="bi bi-geo-alt"></i></span>
+        <span class="contact-label">Địa chỉ</span>
+        <strong>100/3 Quang Trung, Tăng Nhơn Phú, TPHCM</strong>
+        <span class="contact-action">Xem bản đồ <i class="bi bi-arrow-up-right"></i></span>
+      </a>
+    </div>
+    <a class="landing-contact-form-link" th:href="@{/contact}">
+      Gửi lời nhắn cho nhà xe <i class="bi bi-arrow-right"></i>
+    </a>
+  </section>
+</main>
+
+<footer class="landing-footer">
+  <a class="landing-brand" th:href="@{/}"><span class="brand-mark"><i class="bi bi-p-square-fill"></i></span><span>NHÀ XE <strong>HIẾU MINH</strong></span></a>
+  <span>Đặt chỗ thuận tiện · Gửi xe an tâm</span>
+  <a href="#lien-he">Liên hệ</a>
+  <a th:href="@{/login}">Đăng nhập hệ thống</a>
+</footer>
+<script>
+  (() => {
+    const logos = document.getElementById('about-customer-logos');
+    const dots = document.querySelectorAll('.about-customer-dots [data-center-logo]');
+    if (!logos || dots.length === 0) return;
+
+    const logoOrder = ['hoa-sen', 'hitc', 'real-madrid'];
+    const showCenteredLogo = (centerLogo) => {
+      const centerIndex = logoOrder.indexOf(centerLogo);
+      if (centerIndex < 0) return;
+
+      const orderedLogos = [
+        logoOrder[(centerIndex + 1) % logoOrder.length],
+        centerLogo,
+        logoOrder[(centerIndex + 2) % logoOrder.length]
+      ];
+      orderedLogos.forEach((logo) => {
+        const card = logos.querySelector(`[data-customer-logo="${logo}"]`);
+        if (card) logos.append(card);
+      });
+
+      logos.querySelectorAll('.about-customer-logo').forEach((card) => {
+        card.classList.toggle('about-customer-logo-featured', card.dataset.customerLogo === centerLogo);
+      });
+      dots.forEach((dot) => {
+        const selected = dot.dataset.centerLogo === centerLogo;
+        dot.classList.toggle('active', selected);
+        dot.setAttribute('aria-pressed', String(selected));
+      });
+    };
+
+    dots.forEach((dot) => {
+      dot.addEventListener('click', () => showCenteredLogo(dot.dataset.centerLogo));
+    });
+
+    let touchStartX = null;
+    logos.addEventListener('pointerdown', (event) => {
+      if (event.pointerType === 'touch') touchStartX = event.clientX;
+    });
+    logos.addEventListener('pointerup', (event) => {
+      if (touchStartX === null || event.pointerType !== 'touch') return;
+
+      const swipeDistance = event.clientX - touchStartX;
+      touchStartX = null;
+      if (Math.abs(swipeDistance) < 40) return;
+
+      const activeLogo = document.querySelector('.about-customer-dots [aria-pressed="true"]');
+      const activeIndex = logoOrder.indexOf(activeLogo?.dataset?.centerLogo);
+      if (activeIndex < 0) return;
+      const nextIndex = (activeIndex + (swipeDistance < 0 ? 1 : logoOrder.length - 1)) % logoOrder.length;
+      showCenteredLogo(logoOrder[nextIndex]);
+    });
+    logos.addEventListener('pointercancel', () => {
+      touchStartX = null;
+    });
+  })();
+</script>
+<div th:replace="~{fragments :: supportChat}"></div>
+</body>
+</html>

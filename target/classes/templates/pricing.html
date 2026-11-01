@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Bảng giá')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('pricing')}"></div>
+<div class="container">
+  <div th:replace="~{fragments :: alerts}"></div>
+  <h5>Bảng giá &amp; sức chứa</h5>
+  <div class="table-responsive"><table class="table align-middle">
+    <thead><tr><th>Loại xe</th><th>Giá lượt/ngày (đ)</th><th>Giá vé tháng (đ)</th><th>Giá đặt chỗ/giờ (đ)</th><th>Sức chứa</th><th></th></tr></thead>
+    <tbody>
+      <tr th:each="p : ${prices}">
+        <td><strong th:text="${p.vehicleType.label}"></strong>
+          <form th:id="'f' + ${p.id}" th:action="@{/admin/pricing/{id}(id=${p.id})}" method="post"></form></td>
+        <td><input name="turnPrice" type="number" min="0" th:value="${p.turnPrice}" class="form-control" th:attr="form='f' + ${p.id}"></td>
+        <td><input name="monthPrice" type="number" min="0" th:value="${p.monthPrice}" class="form-control" th:attr="form='f' + ${p.id}"></td>
+        <td><input name="reservationHourlyPrice" type="number" min="1" th:value="${p.reservationHourlyPrice}" class="form-control" th:attr="form='f' + ${p.id}"></td>
+        <td><input name="capacity" type="number" min="0" th:value="${p.capacity}" class="form-control" th:attr="form='f' + ${p.id}"></td>
+        <td><button class="btn btn-primary btn-sm" th:attr="form='f' + ${p.id}">Cập nhật</button></td>
+      </tr>
+    </tbody>
+  </table></div>
+</div>
+</body>
+</html>

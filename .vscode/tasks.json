@@ -1,0 +1,123 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Parking Management Server",
+			"type": "shell",
+			"command": ".\\mvnw.cmd",
+			"args": [
+				"spring-boot:run"
+			],
+			"options": {
+				"env": {
+					"SPRING_PROFILES_ACTIVE": ""
+				}
+			},
+			"isBackground": true,
+			"problemMatcher": {
+				"owner": "parking-management",
+				"pattern": {
+					"regexp": "a^"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": ".*Starting ParkingApplication.*",
+					"endsPattern": ".*Started ParkingApplication in .*"
+				}
+			},
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			}
+		},
+		{
+			"label": "Start Parking Management Next.js Frontend",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"run",
+				"dev"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}\\web"
+			},
+			"isBackground": true,
+			"problemMatcher": {
+				"owner": "parking-management-next",
+				"pattern": {
+					"regexp": "a^"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": ".*next dev.*",
+					"endsPattern": ".*Ready in .*"
+				}
+			},
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			}
+		},
+		{
+			"label": "Open Parking Management Web App",
+			"type": "process",
+			"command": "powershell.exe",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Start-Process 'http://localhost:3000'"
+			],
+			"presentation": {
+				"reveal": "never"
+			}
+		},
+		{
+			"label": "Run Parking Management Web App",
+			"dependsOn": [
+				"Start Parking Management Server",
+				"Start Parking Management Next.js Frontend",
+				"Open Parking Management Web App"
+			],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		},
+		{
+			"label": "Start Parking Management Server (H2)",
+			"type": "shell",
+			"command": ".\\mvnw.cmd",
+			"args": [
+				"spring-boot:run"
+			],
+			"options": {
+				"env": {
+					"SPRING_PROFILES_ACTIVE": "h2"
+				}
+			},
+			"isBackground": true,
+			"problemMatcher": {
+				"owner": "parking-management-h2",
+				"pattern": {
+					"regexp": "a^"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": ".*Starting ParkingApplication.*",
+					"endsPattern": ".*Started ParkingApplication in .*"
+				}
+			},
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			}
+		},
+		{
+			"label": "Run Parking Management Web App (H2)",
+			"dependsOn": [
+				"Start Parking Management Server (H2)",
+				"Open Parking Management Web App"
+			],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		}
+	]
+}

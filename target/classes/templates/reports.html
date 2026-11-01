@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Báo cáo doanh thu')}"></head>
+<body class="revenue-report">
+<div th:replace="~{fragments :: nav('reports')}"></div>
+
+<main class="container-fluid report-page">
+  <section class="report-heading">
+    <div>
+      <span class="report-eyebrow">TRUNG TÂM PHÂN TÍCH</span>
+      <h1>Báo cáo doanh thu</h1>
+      <p>Theo dõi doanh thu và hoạt động gửi xe theo khoảng thời gian.</p>
+    </div>
+    <a class="report-export" th:href="@{/admin/reports/export(from=${from},to=${to})}">
+      <i class="bi bi-download"></i> Xuất báo cáo
+    </a>
+  </section>
+
+  <form th:action="@{/admin/reports}" method="get" class="report-filters" id="report-filter-form">
+    <div class="report-filter-title">
+      <span class="filter-icon"><i class="bi bi-calendar-range"></i></span>
+      <div>
+        <strong>Khoảng thời gian</strong>
+        <small>Chọn ngày bắt đầu và kết thúc</small>
+      </div>
+    </div>
+    <div class="report-date-fields">
+      <label>
+        <span>Từ ngày</span>
+        <input type="date" name="from" th:value="${from}" required>
+      </label>
+      <span class="date-separator"><i class="bi bi-arrow-right"></i></span>
+      <label>
+        <span>Đến ngày</span>
+        <input type="date" name="to" th:value="${to}" required>
+      </label>
+      <button type="submit" class="report-apply"><i class="bi bi-sliders"></i> Cập nhật</button>
+    </div>
+    <div class="report-presets" aria-label="Chọn khoảng nhanh">
+      <button type="button" data-range="today">Hôm nay</button>
+      <button type="button" data-range="7">7 ngày</button>
+      <button type="button" data-range="30">30 ngày</button>
+      <button type="button" data-range="month">Tháng này</button>
+    </div>
+  </form>
+
+  <section class="report-kpis" aria-label="Tổng quan doanh thu">
+    <article class="report-kpi kpi-total">
+      <div class="kpi-top">
+        <span class="kpi-icon"><i class="bi bi-wallet2"></i></span>
+        <span class="kpi-caption">TỔNG DOANH THU</span>
+      </div>
+      <strong class="kpi-amount"><span th:text="${#numbers.formatInteger(s.total(),0,'POINT')}">0</span><small>đ</small></strong>
+      <span class="kpi-note"><i class="bi bi-calendar3"></i> Trong khoảng đã chọn</span>
+    </article>
+    <article class="report-kpi">
+      <div class="kpi-top">
+        <span class="kpi-icon rides"><i class="bi bi-car-front"></i></span>
+        <span class="kpi-caption">LƯỢT XE HOÀN TẤT</span>
+      </div>
+      <strong class="kpi-amount"><span th:text="${s.vehicles}">0</span><small>lượt</small></strong>
+      <span class="kpi-note">Các lượt đã check-out</span>
+    </article>
+    <article class="report-kpi">
+      <div class="kpi-top">
+        <span class="kpi-icon turn"><i class="bi bi-receipt"></i></span>
+        <span class="kpi-caption">DOANH THU VÉ LƯỢT</span>
+      </div>
+      <strong class="kpi-amount"><span th:text="${#numbers.formatInteger(s.turnRevenue,0,'POINT')}">0</span><small>đ</small></strong>
+      <span class="kpi-note">Phí gửi xe theo lượt</span>
+    </article>
+    <article class="report-kpi">
+      <div class="kpi-top">
+        <span class="kpi-icon online"><i class="bi bi-calendar2-check"></i></span>
+        <span class="kpi-caption">DOANH THU ĐẶT CHỖ ONLINE</span>
+      </div>
+      <strong class="kpi-amount"><span th:text="${#numbers.formatInteger(s.reservationRevenue,0,'POINT')}">0</span><small>đ</small></strong>
+      <span class="kpi-note"><span th:text="${s.reservations}">0</span> đơn đã xác nhận thanh toán</span>
+    </article>
+    <article class="report-kpi">
+      <div class="kpi-top">
+        <span class="kpi-icon monthly"><i class="bi bi-ticket-perforated"></i></span>
+        <span class="kpi-caption">DOANH THU VÉ THÁNG</span>
+      </div>
+      <strong class="kpi-amount"><span th:text="${#numbers.formatInteger(s.ticketRevenue,0,'POINT')}">0</span><small>đ</small></strong>
+      <span class="kpi-note">Vé đăng ký trong kỳ</span>
+    </article>
+  </section>
+
+  <section class="report-charts">
+    <article class="report-panel revenue-chart-panel">
+      <header class="panel-heading">
+        <div>
+          <span class="panel-overline">DOANH THU</span>
+          <h2>Xu hướng theo ngày</h2>
+        </div>
+        <span class="panel-period" th:text="|${#temporals.format(from,'dd/MM/yyyy')} — ${#temporals.format(to,'dd/MM/yyyy')}|">Khoảng ngày</span>
+      </header>
+      <div class="daily-chart" id="daily-chart" role="img" aria-label="Biểu đồ doanh thu theo ngày">
+        <div class="chart-empty" th:if="${#lists.isEmpty(s.days)}">
+          <i class="bi bi-bar-chart-line"></i>
+          <span>Chưa có doanh thu trong khoảng thời gian này</span>
+        </div>
+      </div>
+      <table class="chart-source" aria-hidden="true">
+        <tbody>
+          <tr th:each="day : ${s.days}"
+              th:attr="data-date=${#temporals.format(day.date,'dd/MM')}, data-count=${day.count}, data-bookings=${day.reservationCount}, data-revenue=${day.revenue}"></tr>
+        </tbody>
+      </table>
+      <footer class="chart-legend"><span class="legend-square"></span> Vé lượt, đặt chỗ online và vé tháng <span class="legend-unit">Đơn vị: VNĐ</span></footer>
+    </article>
+
+    <article class="report-panel mix-panel">
+      <header class="panel-heading">
+        <div>
+          <span class="panel-overline">CƠ CẤU</span>
+          <h2>Nguồn doanh thu</h2>
+        </div>
+      </header>
+      <div class="mix-content">
+        <div class="donut-wrap">
+          <div class="revenue-donut" id="revenue-donut" role="img" aria-label="Biểu đồ cơ cấu doanh thu">
+            <div class="donut-center">
+              <strong th:text="${#numbers.formatInteger(s.total(),0,'POINT')}">0</strong>
+              <span>Tổng doanh thu</span>
+            </div>
+          </div>
+        </div>
+        <div class="mix-legend">
+          <div class="mix-row">
+            <span class="mix-dot turn-dot"></span>
+            <span class="mix-name">Vé lượt</span>
+            <strong th:text="${#numbers.formatInteger(s.turnRevenue,0,'POINT')}">0</strong>
+            <small class="mix-percentage" th:attr="data-value=${s.turnRevenue}">0%</small>
+          </div>
+          <div class="mix-row">
+            <span class="mix-dot online-dot"></span>
+            <span class="mix-name">Đặt chỗ online</span>
+            <strong th:text="${#numbers.formatInteger(s.reservationRevenue,0,'POINT')}">0</strong>
+            <small class="mix-percentage" th:attr="data-value=${s.reservationRevenue}">0%</small>
+          </div>
+          <div class="mix-row">
+            <span class="mix-dot monthly-dot"></span>
+            <span class="mix-name">Vé tháng</span>
+            <strong th:text="${#numbers.formatInteger(s.ticketRevenue,0,'POINT')}">0</strong>
+            <small class="mix-percentage" th:attr="data-value=${s.ticketRevenue}">0%</small>
+          </div>
+        </div>
+      </div>
+      <div class="mix-insight">
+        <i class="bi bi-lightbulb"></i>
+        <span>Cơ cấu doanh thu được tính theo dữ liệu phát sinh trong khoảng thời gian đã chọn.</span>
+      </div>
+    </article>
+  </section>
+
+  <section class="report-details">
+    <article class="report-panel detail-panel">
+      <header class="panel-heading">
+        <div>
+          <span class="panel-overline">CHI TIẾT</span>
+          <h2>Doanh thu từng ngày</h2>
+        </div>
+        <span class="record-count"><span th:text="${#lists.size(s.days)}">0</span> ngày có giao dịch</span>
+      </header>
+      <div class="table-responsive">
+        <table class="table report-table">
+          <thead>
+          <tr><th>Ngày</th><th class="text-end">Lượt xe</th><th class="text-end">Đơn đặt chỗ</th><th class="text-end">Tổng doanh thu</th><th class="text-end">Tỷ trọng</th></tr>
+          </thead>
+          <tbody>
+          <tr th:each="day : ${s.days}">
+            <td><span class="table-date-icon"><i class="bi bi-calendar-event"></i></span>
+              <strong th:text="${#temporals.format(day.date,'dd/MM/yyyy')}">01/01/2026</strong></td>
+            <td class="text-end" th:text="${day.count}">0</td>
+            <td class="text-end" th:text="${day.reservationCount}">0</td>
+            <td class="text-end revenue-cell"><span th:text="${#numbers.formatInteger(day.revenue,0,'POINT')}">0</span> đ</td>
+            <td class="text-end"><span class="share-badge" th:attr="data-revenue=${day.revenue}">0%</span></td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(s.days)}">
+            <td colspan="5" class="report-empty-row">Chưa có giao dịch doanh thu trong khoảng thời gian này.</td>
+          </tr>
+          </tbody>
+          <tfoot th:if="${!#lists.isEmpty(s.days)}">
+          <tr>
+            <th>Tổng cộng</th>
+            <th class="text-end" th:text="${s.vehicles}">0</th>
+            <th class="text-end" th:text="${s.reservations}">0</th>
+            <th class="text-end"><span th:text="${#numbers.formatInteger(s.total(),0,'POINT')}">0</span> đ</th>
+            <th class="text-end">Tất cả nguồn</th>
+          </tr>
+          </tfoot>
+        </table>
+      </div>
+    </article>
+
+    <article class="report-panel type-panel">
+      <header class="panel-heading">
+        <div>
+          <span class="panel-overline">PHÂN TÍCH</span>
+          <h2>Doanh thu theo loại xe</h2>
+        </div>
+      </header>
+      <div class="type-revenue-list">
+        <div class="type-revenue-row" th:each="entry : ${s.byType}">
+          <div class="type-revenue-top">
+            <span th:text="${entry.key}">Loại xe</span>
+            <strong><span th:text="${#numbers.formatInteger(entry.value,0,'POINT')}">0</span> đ</strong>
+          </div>
+          <div class="type-revenue-track">
+            <span th:attr="data-revenue=${entry.value}"></span>
+          </div>
+        </div>
+      </div>
+      <p class="type-note"><i class="bi bi-info-circle"></i> Bao gồm vé lượt, đặt chỗ online đã xác nhận và vé tháng.</p>
+    </article>
+  </section>
+</main>
+
+<script>
+  (() => {
+    const form = document.getElementById('report-filter-form');
+    const fromInput = form.querySelector('[name="from"]');
+    const toInput = form.querySelector('[name="to"]');
+    document.querySelectorAll('.report-presets button').forEach((button) => {
+      button.addEventListener('click', () => {
+        const today = new Date();
+        const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const start = new Date(end);
+        const range = button.dataset.range;
+        if (range === 'month') {
+          start.setDate(1);
+        } else if (range !== 'today') {
+          start.setDate(start.getDate() - Number(range) + 1);
+        }
+        const iso = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        fromInput.value = iso(start);
+        toInput.value = iso(end);
+        form.requestSubmit();
+      });
+    });
+
+    const dailyData = [...document.querySelectorAll('.chart-source tr')].map((row) => ({
+      date: row.dataset.date,
+      count: Number(row.dataset.count),
+      bookings: Number(row.dataset.bookings),
+      revenue: Number(row.dataset.revenue)
+    }));
+    const totalRevenue = Number(document.querySelector('.kpi-total .kpi-amount span').textContent.replace(/\./g, '')) || 0;
+    const maxRevenue = Math.max(...dailyData.map((row) => row.revenue), 0);
+    const donut = document.getElementById('revenue-donut');
+    const mixLabels = [...document.querySelectorAll('.mix-percentage')];
+    const mixValues = mixLabels.map((label) => Number(label.dataset.value));
+    const mixTotal = mixValues.reduce((sum, value) => sum + value, 0);
+    let mixOffset = 0;
+    const mixColors = ['#4f7df3', '#f28a45', '#43c6a4'];
+    const mixSegments = mixValues.map((value, index) => {
+      const start = mixTotal ? mixOffset * 100 / mixTotal : 0;
+      mixOffset += value;
+      return `${mixColors[index]} ${start}% ${mixTotal ? mixOffset * 100 / mixTotal : 100}%`;
+    });
+    mixLabels.forEach((label) => {
+      const value = Number(label.dataset.value);
+      label.textContent = `${mixTotal ? Math.round(value * 100 / mixTotal) : 0}%`;
+    });
+    donut.style.background = mixTotal
+      ? `conic-gradient(${mixSegments.join(', ')})`
+      : 'conic-gradient(#e8edf4 0 100%)';
+
+    document.querySelectorAll('.share-badge').forEach((badge) => {
+      const value = Number(badge.dataset.revenue);
+      badge.textContent = `${totalRevenue ? Math.round(value * 100 / totalRevenue) : 0}%`;
+    });
+    const typeBars = [...document.querySelectorAll('.type-revenue-track span')];
+    const maxTypeRevenue = Math.max(...typeBars.map((item) => Number(item.dataset.revenue)), 0);
+    typeBars.forEach((bar) => {
+      const value = Number(bar.dataset.revenue);
+      bar.style.width = `${maxTypeRevenue ? value * 100 / maxTypeRevenue : 0}%`;
+    });
+
+    const chart = document.getElementById('daily-chart');
+    if (!dailyData.length) return;
+    const width = Math.max(520, chart.clientWidth || 680);
+    const height = 230;
+    const margin = { top: 16, right: 14, bottom: 34, left: 58 };
+    const plotWidth = width - margin.left - margin.right;
+    const plotHeight = height - margin.top - margin.bottom;
+    const ceiling = maxRevenue > 0 ? maxRevenue * 1.15 : 1;
+    const labelStep = Math.max(1, Math.ceil(dailyData.length / 10));
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.setAttribute('class', 'daily-chart-svg');
+    const add = (tag, attrs, text) => {
+      const element = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      Object.entries(attrs).forEach(([key, value]) => element.setAttribute(key, value));
+      if (text) element.textContent = text;
+      svg.appendChild(element);
+      return element;
+    };
+    for (let tick = 0; tick <= 4; tick++) {
+      const y = margin.top + plotHeight * tick / 4;
+      const value = Math.round(ceiling * (4 - tick) / 4);
+      add('line', { x1: margin.left, y1: y, x2: width - margin.right, y2: y, class: 'chart-gridline' });
+      add('text', { x: margin.left - 9, y: y + 4, 'text-anchor': 'end', class: 'chart-axis-label' },
+        new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 }).format(value));
+    }
+    const slot = plotWidth / dailyData.length;
+    const barWidth = Math.min(34, slot * 0.54);
+    dailyData.forEach((row, index) => {
+      const barHeight = Math.max(row.revenue > 0 ? 3 : 0, row.revenue / ceiling * plotHeight);
+      const x = margin.left + slot * index + (slot - barWidth) / 2;
+      const y = margin.top + plotHeight - barHeight;
+      add('rect', { x, y, width: barWidth, height: barHeight, rx: 5, class: 'chart-bar' });
+      if (index % labelStep === 0 || index === dailyData.length - 1) {
+        add('text', { x: x + barWidth / 2, y: height - 10, 'text-anchor': 'middle', class: 'chart-axis-label' }, row.date);
+      }
+      if (dailyData.length <= 12 && row.revenue > 0) {
+        add('text', { x: x + barWidth / 2, y: y - 6, 'text-anchor': 'middle', class: 'chart-value-label' },
+          new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 }).format(row.revenue));
+      }
+    });
+    chart.appendChild(svg);
+  })();
+</script>
+</body>
+</html>
